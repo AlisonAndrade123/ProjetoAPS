@@ -19,6 +19,7 @@
  <li>Alison Andrade Alves</li>
  <li>José Arthur de Araújo Almeida</li>
  <li>Ruan Gouveia dos Santos</li>
+ <li>Denis Willian Paulo da Silva</li>
 </ul>
 
 ---
