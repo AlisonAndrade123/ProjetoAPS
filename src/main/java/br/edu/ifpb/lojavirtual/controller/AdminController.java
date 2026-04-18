@@ -1,7 +1,9 @@
 package br.edu.ifpb.lojavirtual.controller;
 
+import br.edu.ifpb.lojavirtual.dao.CatalogoDAO;
 import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importe adicionado
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
+import br.edu.ifpb.lojavirtual.model.Catalogo;
 import br.edu.ifpb.lojavirtual.model.Categoria; // Importe adicionado
 import br.edu.ifpb.lojavirtual.model.Produto;
 import br.edu.ifpb.lojavirtual.model.Usuario;
@@ -9,15 +11,20 @@ import br.edu.ifpb.lojavirtual.service.AuthService;
 import br.edu.ifpb.lojavirtual.util.NavigationManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +44,10 @@ public class AdminController {
     private ProdutoDAO produtoDAO;
 
     @FXML
+    private ComboBox<Catalogo> cbCatalogosAdmin;
+    private CatalogoDAO catalogoDAO = new CatalogoDAO();
+
+    @FXML
     public void initialize() {
         this.produtoDAO = new ProdutoDAO();
         this.adminLogado = AuthService.getInstance().getUsuarioLogado();
@@ -49,6 +60,7 @@ public class AdminController {
         searchTextField.textProperty().addListener((obs, oldText, newText) -> filterProducts(newText));
         criarBotoesDeCategoria();
         loadAllProducts();
+        carregarCatalogosNoMenu();
     }
 
     @FXML
@@ -269,9 +281,59 @@ public class AdminController {
             productTilePane.getChildren().add(noProductsLabel);
         }
     }
+
+    private void carregarCatalogosNoMenu() {
+        try {
+            List<Catalogo> catalogos = catalogoDAO.listarTodos();
+
+            // Adiciona uma opção "Todos" (com ID null ou 0) para limpar o filtro
+            Catalogo todos = new Catalogo();
+            todos.setNome("Todos os Produtos");
+            catalogos.add(0, todos);
+
+            cbCatalogosAdmin.getItems().setAll(catalogos);
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar catálogos no menu: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void filtrarPorCatalogo(ActionEvent event) {
+        Catalogo selecionado = cbCatalogosAdmin.getSelectionModel().getSelectedItem();
+        if (selecionado == null) return;
+
+        try {
+            List<Produto> produtosFiltrados;
+            if (selecionado.getNome().equals("Todos os Produtos")) {
+                produtosFiltrados = produtoDAO.findAll(); // Traz todos
+            } else {
+                produtosFiltrados = produtoDAO.listarPorCatalogo(selecionado.getId()); // Filtra pelo DAO
+            }
+            
+            displayProducts(produtosFiltrados);
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao filtrar produtos por catálogo: " + e.getMessage());
+        }
+    }
+
     @FXML
     void handleLogout(ActionEvent event) {
         AuthService.getInstance().logout(); // Limpa a sessão
         NavigationManager.getInstance().navigateToLogin(); // Volta para o login
+    }
+
+    @FXML
+    public void handleManageCatalogs(javafx.event.ActionEvent event) {
+        // Pega a janela atual para usar como fundo do modal
+        Window ownerWindow = ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+
+        NavigationManager.getInstance().setupModal(
+                "/br/edu/ifpb/lojavirtual/view/GerenciarCatalogoView.fxml",
+                "Gerenciar Catálogos",
+                ownerWindow
+        );
+
+        carregarCatalogosNoMenu();
     }
 }

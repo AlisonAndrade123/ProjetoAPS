@@ -1,7 +1,9 @@
 package br.edu.ifpb.lojavirtual.controller;
 
+import br.edu.ifpb.lojavirtual.dao.CatalogoDAO;
 import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importe adicionado
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
+import br.edu.ifpb.lojavirtual.model.Catalogo;
 import br.edu.ifpb.lojavirtual.model.Categoria; // Importe adicionado
 import br.edu.ifpb.lojavirtual.model.Produto;
 import br.edu.ifpb.lojavirtual.model.Usuario;
@@ -30,9 +32,12 @@ public class ProdutosController {
     @FXML private Button cartButton;
     @FXML private Button historyButton;
     @FXML private Button profileButton;
+    @FXML
+    private ComboBox<Catalogo> cbCatalogosCliente;
 
     private Usuario usuarioLogado;
     private ProdutoDAO produtoDAO;
+    private CatalogoDAO catalogoDAO = new CatalogoDAO();
 
     @FXML
     public void initialize() {
@@ -50,6 +55,7 @@ public class ProdutosController {
         }
         criarBotoesDeCategoria();
         loadAllProducts();
+        carregarCatalogos();
     }
 
     private void criarBotoesDeCategoria() {
@@ -215,4 +221,41 @@ public class ProdutosController {
         AuthService.getInstance().logout();
         NavigationManager.getInstance().navigateToLogin();
     }
+
+    private void carregarCatalogos() {
+        try {
+            List<Catalogo> catalogos = catalogoDAO.listarTodos();
+
+            // Opção para o cliente voltar a ver todos os produtos
+            Catalogo todos = new Catalogo();
+            todos.setNome("Todos os Produtos");
+            catalogos.add(0, todos);
+
+            cbCatalogosCliente.getItems().setAll(catalogos);
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar os catálogos: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void filtrarPorCatalogo(ActionEvent event) {
+        Catalogo selecionado = cbCatalogosCliente.getSelectionModel().getSelectedItem();
+        if (selecionado == null) return;
+
+        try {
+            List<Produto> produtosFiltrados;
+
+            if (selecionado.getNome().equals("Todos os Produtos")) {
+                produtosFiltrados = produtoDAO.findAll();
+            } else {
+                // Chama o método novo que criamos no Passo 2!
+                produtosFiltrados = produtoDAO.listarPorCatalogo(selecionado.getId());
+            }
+            displayProducts(produtosFiltrados);
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar produtos do catálogo: " + e.getMessage());
+        }
+    }
+
 }

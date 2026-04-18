@@ -13,6 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.control.ComboBox?>
 <BorderPane style="-fx-background-color: #00A60E;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.edu.ifpb.lojavirtual.controller.AdminController">
     <top>
         <HBox alignment="CENTER_LEFT" spacing="15.0">
@@ -33,8 +34,14 @@
                     </children>
                 </AnchorPane>
 
+                <ComboBox fx:id="cbCatalogosAdmin" promptText="Filtrar por Catálogo" prefHeight="45.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 10;" onAction="#filtrarPorCatalogo"/>
+
                 <!-- Botão Adicionar -->
                 <Button fx:id="addProductButton" mnemonicParsing="false" onAction="#handleAddProduct" prefHeight="45.0" prefWidth="192.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Adicionar Produto" textFill="#00A60E">
+                    <font><Font name="System Bold" size="16.0" /></font>
+                </Button>
+
+                <Button fx:id="manageCatalogsButton" mnemonicParsing="false" onAction="#handleManageCatalogs" prefHeight="45.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Gerenciar Catálogos" textFill="#00A60E">
                     <font><Font name="System Bold" size="16.0" /></font>
                 </Button>
 

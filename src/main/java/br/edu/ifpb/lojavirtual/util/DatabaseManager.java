@@ -93,10 +93,26 @@ public class DatabaseManager {
                     "FOREIGN KEY (produto_id) REFERENCES produtos(id))";
             stmt.execute(createPedidoItensTable);
 
+            // 8. Tabela de Catálogos
+            String createCatalogosTable = "CREATE TABLE IF NOT EXISTS catalogos (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "nome TEXT UNIQUE NOT NULL)";
+            stmt.execute(createCatalogosTable);
+
+            // 9. Tabela de Relacionamento Catálogo-Produto (N:N)
+            String createCatalogoProdutosTable = "CREATE TABLE IF NOT EXISTS catalogo_produtos (" +
+                    "id_catalogo INTEGER NOT NULL," +
+                    "id_produto INTEGER NOT NULL," +
+                    "PRIMARY KEY (id_catalogo, id_produto)," +
+                    "FOREIGN KEY (id_catalogo) REFERENCES catalogos(id) ON DELETE CASCADE," +
+                    "FOREIGN KEY (id_produto) REFERENCES produtos(id) ON DELETE CASCADE)";
+            stmt.execute(createCatalogoProdutosTable);
+
             // INSERÇÕES PADRÃO
             inserirAdminPadrao(conn);
             inserirCategoriasPadrao(conn); // Precisa rodar antes dos produtos
             inserirProdutosPadrao(conn);
+            inserirCatalogosPadrao(conn);
 
         } catch (SQLException e) {
             System.err.println("Erro ao inicializar o banco de dados: " + e.getMessage());
@@ -199,6 +215,56 @@ public class DatabaseManager {
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
+        }
+    }
+
+    private static void inserirCatalogosPadrao(Connection conn) {
+        String checkSql = "SELECT COUNT(*) FROM catalogos";
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(checkSql)) {
+
+            // Só insere se a tabela de catálogos estiver vazia
+            if (rs.next() && rs.getInt(1) == 0) {
+
+                // 1. Inserir os Catálogos
+                String insertCatalogoSql = "INSERT INTO catalogos (nome) VALUES (?)";
+                try (PreparedStatement pstmtCatalogo = conn.prepareStatement(insertCatalogoSql)) {
+
+                    String[] catalogosPadrao = {"Lançamentos", "Promoções", "Mais Vendidos"};
+
+                    for (String nomeCatalogo : catalogosPadrao) {
+                        pstmtCatalogo.setString(1, nomeCatalogo);
+                        pstmtCatalogo.executeUpdate();
+                    }
+                }
+
+                // 2. Vincular produtos aos catálogos (Tabela Intermediária)
+                // OBS: Estou assumindo que você tem produtos com ID 1, 2 e 3 cadastrados.
+                String insertRelacionamentoSql = "INSERT INTO catalogo_produtos (id_catalogo, id_produto) VALUES (?, ?)";
+                try (PreparedStatement pstmtRelacionamento = conn.prepareStatement(insertRelacionamentoSql)) {
+
+                    // Vinculando o Produto ID 1 ao catálogo "Lançamentos" (ID 1)
+                    pstmtRelacionamento.setInt(1, 1); // ID Catálogo
+                    pstmtRelacionamento.setInt(2, 1); // ID Produto
+                    pstmtRelacionamento.executeUpdate();
+
+                    // Vinculando o Produto ID 2 ao catálogo "Lançamentos" (ID 1)
+                    pstmtRelacionamento.setInt(1, 1);
+                    pstmtRelacionamento.setInt(2, 2);
+                    pstmtRelacionamento.executeUpdate();
+
+                    // Vinculando o Produto ID 3 ao catálogo "Promoções" (ID 2)
+                    pstmtRelacionamento.setInt(1, 2);
+                    pstmtRelacionamento.setInt(2, 3);
+                    pstmtRelacionamento.executeUpdate();
+                }
+
+                System.out.println("Catálogos padrão e relacionamentos inseridos com sucesso!");
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao inserir catálogos padrão: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

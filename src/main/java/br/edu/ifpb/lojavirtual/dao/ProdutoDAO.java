@@ -161,4 +161,38 @@ public class ProdutoDAO {
 
         return produto;
     }
+
+    public List<Produto> listarPorCatalogo(int idCatalogo) throws SQLException {
+        List<Produto> produtos = new ArrayList<>();
+
+        // A consulta usa INNER JOIN para pegar os produtos que estão na tabela intermediária com o ID do catálogo
+        String sql = "SELECT p.* FROM produtos p " +
+                "INNER JOIN catalogo_produtos cp ON p.id = cp.id_produto " +
+                "WHERE cp.id_catalogo = ?";
+
+        try (Connection conn = br.edu.ifpb.lojavirtual.util.DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idCatalogo);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Produto p = new Produto();
+                    // ATENÇÃO: Verifique se os nomes dos setters (ex: setPreco)
+                    // e os tipos (ex: getDouble ou getBigDecimal) batem com o seu model atual.
+                    p.setId(rs.getInt("id"));
+                    p.setNome(rs.getString("nome"));
+                    p.setDescricao(rs.getString("descricao"));
+                    p.setPreco(rs.getDouble("preco"));
+                    p.setQuantidade(rs.getInt("quantidade"));
+
+                    // Se você tiver uma string para a imagem:
+                    p.setNomeArquivoImagem(rs.getString("nome_arquivo_imagem"));
+
+                    produtos.add(p);
+                }
+            }
+        }
+        return produtos;
+    }
 }
