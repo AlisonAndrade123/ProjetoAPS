@@ -52,13 +52,8 @@ public class PedidoDAO {
 
         } catch (SQLException e) {
             if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
-            e.printStackTrace();
             throw e;
         } finally {
             if (conn != null) {
@@ -72,10 +67,12 @@ public class PedidoDAO {
         }
     }
 
+    /**
+     * Busca pedidos filtrando OBRIGATORIAMENTE pelo ID do usuário.
+     */
     public List<Pedido> buscarPorUsuario(int usuarioId) throws SQLException {
         Map<Integer, Pedido> pedidosMap = new LinkedHashMap<>();
 
-        // SQL ATUALIZADO: Fazendo JOIN com categorias para buscar a categoria correta do produto
         String sql = "SELECT ped.id as pedido_id, ped.data_pedido, ped.valor_total, " +
                 "item.id as item_id, item.quantidade as item_quantidade, item.preco_unitario, " +
                 "prod.id as produto_id, prod.nome as produto_nome, prod.descricao as produto_descricao, " +
@@ -85,13 +82,19 @@ public class PedidoDAO {
                 "JOIN pedido_itens item ON ped.id = item.pedido_id " +
                 "JOIN produtos prod ON item.produto_id = prod.id " +
                 "JOIN categorias cat ON prod.id_categoria = cat.id " +
-                "WHERE ped.usuario_id = ? ORDER BY ped.id DESC, item.id ASC";
+                "WHERE ped.usuario_id = ? " + // FILTRO CRÍTICO
+                "ORDER BY ped.id DESC, item.id ASC";
 
-        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setInt(1, usuarioId);
             ResultSet rs = pstmt.executeQuery();
+
             while(rs.next()) {
                 int pedidoId = rs.getInt("pedido_id");
+
+                // Cria o pedido apenas se ele ainda não estiver no Map
                 Pedido pedido = pedidosMap.computeIfAbsent(pedidoId, id -> {
                     Pedido p = new Pedido();
                     p.setId(id);
@@ -101,11 +104,12 @@ public class PedidoDAO {
                         p.setValorTotal(rs.getDouble("valor_total"));
                         p.setItens(new ArrayList<>());
                     } catch (SQLException e) {
-                        throw new RuntimeException(e);
+                        throw new RuntimeException("Erro ao ler dados do pedido", e);
                     }
                     return p;
                 });
 
+                // Cria o produto do item
                 Produto produto = new Produto();
                 produto.setId(rs.getInt("produto_id"));
                 produto.setNome(rs.getString("produto_nome"));
@@ -114,15 +118,16 @@ public class PedidoDAO {
                 produto.setQuantidade(rs.getInt("produto_quantidade_estoque"));
                 produto.setNomeArquivoImagem(rs.getString("nome_arquivo_imagem"));
 
-                // --- ATUALIZADO AQUI ---
                 Categoria categoria = new Categoria(rs.getInt("id_categoria"), rs.getString("categoria_nome"));
                 produto.setCategoria(categoria);
 
+                // Cria o item e adiciona ao pedido
                 PedidoItem item = new PedidoItem();
                 item.setId(rs.getInt("item_id"));
                 item.setQuantidade(rs.getInt("item_quantidade"));
                 item.setPrecoUnitario(rs.getDouble("preco_unitario"));
                 item.setProduto(produto);
+
                 pedido.getItens().add(item);
             }
         } catch (SQLException e) {
