@@ -1,10 +1,11 @@
 package br.edu.ifpb.lojavirtual.controller;
 
+import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importe adicionado
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
+import br.edu.ifpb.lojavirtual.model.Categoria; // Importe adicionado
 import br.edu.ifpb.lojavirtual.model.Produto;
 import br.edu.ifpb.lojavirtual.model.Usuario;
 import br.edu.ifpb.lojavirtual.service.AuthService;
-import br.edu.ifpb.lojavirtual.util.CategoriasUtil;
 import br.edu.ifpb.lojavirtual.util.NavigationManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -78,7 +79,7 @@ public class AdminController {
                 modalStage.showAndWait();
             }
         } else {
-            showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Não foi possível carregar a tela de cadastro.");
+            showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Não foi possível carregar a tela de cadastro."); // Encoding corrigido
         }
 
         loadAllProducts();
@@ -100,7 +101,7 @@ public class AdminController {
         alert.setContentText(content);
 
         ButtonType buttonTypeSim = new ButtonType("Sim");
-        ButtonType buttonTypeNao = new ButtonType("Não");
+        ButtonType buttonTypeNao = new ButtonType("Não"); // Encoding corrigido
 
         alert.getButtonTypes().setAll(buttonTypeSim, buttonTypeNao);
 
@@ -111,18 +112,31 @@ public class AdminController {
 
     private void criarBotoesDeCategoria() {
         categoryHBox.getChildren().clear();
-        Button todosButton = criarBotaoEstilizado("Todos");
+
+        // Botão "Todos" recebe uma String como identificador (UserData)
+        Button todosButton = criarBotaoEstilizado("Todos", "Todos");
         categoryHBox.getChildren().add(todosButton);
-        List<String> categorias = CategoriasUtil.getCategorias();
-        for (String nomeCategoria : categorias) {
-            Button categoriaButton = criarBotaoEstilizado(nomeCategoria);
-            categoryHBox.getChildren().add(categoriaButton);
+
+        try {
+            // Busca as categorias reais no banco de dados
+            CategoriaDAO categoriaDAO = new CategoriaDAO();
+            List<Categoria> categorias = categoriaDAO.findAll();
+
+            for (Categoria categoria : categorias) {
+                // Passa o objeto Categoria inteiro como UserData do botão!
+                Button categoriaButton = criarBotaoEstilizado(categoria.getNome(), categoria);
+                categoryHBox.getChildren().add(categoriaButton);
+            }
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível carregar os botões de categoria.");
+            e.printStackTrace();
         }
     }
 
-    private Button criarBotaoEstilizado(String nome) {
+    // Método atualizado para receber o Object userData (pode ser String "Todos" ou um objeto Categoria)
+    private Button criarBotaoEstilizado(String nome, Object userData) {
         Button button = new Button(nome);
-        button.setUserData(nome);
+        button.setUserData(userData);
         button.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #00A60E; -fx-border-radius: 20; -fx-border-width: 2; -fx-text-fill: #333333; -fx-padding: 8 20; -fx-cursor: hand;");
         button.setFont(new Font("System", 16.0));
         button.setOnAction(this::handleCategoryFilter);
@@ -132,11 +146,14 @@ public class AdminController {
     @FXML
     private void handleCategoryFilter(ActionEvent event) {
         Button clickedButton = (Button) event.getSource();
-        String category = (String) clickedButton.getUserData();
-        if ("Todos".equals(category)) {
+        Object userData = clickedButton.getUserData(); // Pegamos o objeto salvo no botão
+
+        if (userData instanceof String && "Todos".equals(userData)) {
             loadAllProducts();
-        } else {
-            filterProductsByCategory(category);
+        } else if (userData instanceof Categoria) {
+            // Se for uma Categoria, pegamos o ID dela para filtrar no banco!
+            Categoria categoriaSelecionada = (Categoria) userData;
+            filterProductsByCategory(categoriaSelecionada.getId());
         }
     }
 
@@ -226,10 +243,11 @@ public class AdminController {
         }
     }
 
-    private void filterProductsByCategory(String category) {
+    // MÉTODO ATUALIZADO: Agora recebe o ID da Categoria em vez de uma String
+    private void filterProductsByCategory(int idCategoria) {
         if (produtoDAO != null) {
             try {
-                List<Produto> produtos = produtoDAO.findByCategory(category);
+                List<Produto> produtos = produtoDAO.findByCategoryId(idCategoria);
                 displayProducts(produtos);
             } catch (SQLException e) {
                 showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage());

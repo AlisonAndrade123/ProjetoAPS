@@ -1,12 +1,15 @@
 package br.edu.ifpb.lojavirtual.controller;
 
+import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importamos o novo DAO
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
+import br.edu.ifpb.lojavirtual.model.Categoria;
 import br.edu.ifpb.lojavirtual.model.Produto;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,11 +17,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
-import java.util.List;
 
 public class CadastrarProdutoController {
+
     @FXML private TextField nomeTextField;
-    @FXML private ComboBox<String> categoriaComboBox;
+
+    // Adicionado o @FXML que estava faltando para o JavaFX reconhecer
+    @FXML private ComboBox<Categoria> categoriaComboBox;
+
     @FXML private TextField imagemTextField;
     @FXML private TextField quantidadeTextField;
     @FXML private TextField descricaoTextField;
@@ -43,9 +49,8 @@ public class CadastrarProdutoController {
         this.produtoDAO = produtoDAO;
     }
 
-    public void setCategorias(List<String> categorias) {
-        categoriaComboBox.getItems().setAll(categorias);
-    }
+    // Removi o método antigo "setCategorias" que recebia List<String>.
+    // Agora o próprio controller busca as categorias do banco no initialize().
 
     public void carregarDadosParaEdicao(Produto produto) {
         this.tituloModal.setText("Editar produto");
@@ -54,16 +59,35 @@ public class CadastrarProdutoController {
         descricaoTextField.setText(produto.getDescricao());
         quantidadeTextField.setText(String.valueOf(produto.getQuantidade()));
         precoTextField.setText(String.format("%.2f", produto.getPreco()).replace('.', ','));
-        categoriaComboBox.setValue(produto.getCategoria());
+
+        // Seleciona a categoria correta no ComboBox comparando pelo ID
+        if (produto.getCategoria() != null) {
+            for (Categoria cat : categoriaComboBox.getItems()) {
+                if (cat.getId().equals(produto.getCategoria().getId())) {
+                    categoriaComboBox.setValue(cat);
+                    break;
+                }
+            }
+        }
+
         if (produto.getNomeArquivoImagem() != null) {
             imagemTextField.setText(produto.getNomeArquivoImagem());
         }
-        finalizarCadastroButton.setText("Salvar Alterações");
+        finalizarCadastroButton.setText("Salvar Alterações"); // Encoding corrigido
     }
 
     @FXML
     public void initialize() {
         imagemTextField.setEditable(false);
+
+        // Carrega as categorias do banco de dados e coloca no ComboBox
+        try {
+            CategoriaDAO categoriaDAO = new CategoriaDAO();
+            categoriaComboBox.getItems().setAll(categoriaDAO.findAll());
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível carregar as categorias do banco.");
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -100,7 +124,7 @@ public class CadastrarProdutoController {
                 showAlertAndClose("Sucesso", "Produto atualizado com sucesso!");
             }
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Erro de Formato", "Preço e Quantidade devem ser números válidos.");
+            showAlert(Alert.AlertType.ERROR, "Erro de Formato", "Preço e Quantidade devem ser números válidos."); // Encoding corrigido
         } catch (SQLException | IOException e) {
             showAlert(Alert.AlertType.ERROR, "Erro", "Ocorreu um erro ao salvar: " + e.getMessage());
             e.printStackTrace();
@@ -116,7 +140,7 @@ public class CadastrarProdutoController {
 
     private void preencherDadosDoFormulario(Produto produto) {
         produto.setNome(nomeTextField.getText());
-        produto.setCategoria(categoriaComboBox.getValue());
+        produto.setCategoria(categoriaComboBox.getValue()); // Agora salva o objeto Categoria certinho!
         produto.setDescricao(descricaoTextField.getText());
         produto.setQuantidade(Integer.parseInt(quantidadeTextField.getText()));
         produto.setPreco(Double.parseDouble(precoTextField.getText().replace(',', '.')));
@@ -127,10 +151,10 @@ public class CadastrarProdutoController {
         if (nomeTextField.getText().trim().isEmpty()) errorMessage += "Nome é obrigatório.\n";
         if (categoriaComboBox.getValue() == null) errorMessage += "Categoria é obrigatória.\n";
         if (quantidadeTextField.getText().trim().isEmpty()) errorMessage += "Quantidade é obrigatória.\n";
-        if (precoTextField.getText().trim().isEmpty()) errorMessage += "Preço é obrigatório.\n";
+        if (precoTextField.getText().trim().isEmpty()) errorMessage += "Preço é obrigatório.\n"; // Encoding corrigido
 
         if (!errorMessage.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Campos Inválidos", errorMessage);
+            showAlert(Alert.AlertType.ERROR, "Campos Inválidos", errorMessage); // Encoding corrigido
             return false;
         }
         return true;

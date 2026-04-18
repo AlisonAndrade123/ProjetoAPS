@@ -1,5 +1,6 @@
 package br.edu.ifpb.lojavirtual.controller;
 
+import br.edu.ifpb.lojavirtual.dao.ProdutoDAO; // Importe adicionado
 import br.edu.ifpb.lojavirtual.model.Endereco;
 import br.edu.ifpb.lojavirtual.model.Produto;
 import br.edu.ifpb.lojavirtual.util.CarrinhoManager;
@@ -8,46 +9,30 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
+import java.sql.SQLException;
 import java.util.Map;
 
 public class CarrinhoController {
-    @FXML
-    private VBox itensCarrinhoVBox;
-    @FXML
-    private Button limparCarrinhoButton;
-    @FXML
-    private Button continuarComprandoButton;
-    @FXML
-    private Label subtotalLabel;
-    @FXML
-    private Label freteLabel;
-    @FXML
-    private Label totalLabel;
-    @FXML
-    private TextField cepField;
-    @FXML
-    private TextField ruaField;
-    @FXML
-    private TextField numeroField;
-    @FXML
-    private TextField complementoField;
-    @FXML
-    private TextField bairroField;
-    @FXML
-    private TextField cidadeField;
-    @FXML
-    private TextField estadoField;
-    @FXML
-    private Button pagamentoButton;
+    @FXML private VBox itensCarrinhoVBox;
+    @FXML private Button limparCarrinhoButton;
+    @FXML private Button continuarComprandoButton;
+    @FXML private Label subtotalLabel;
+    @FXML private Label freteLabel;
+    @FXML private Label totalLabel;
+    @FXML private TextField cepField;
+    @FXML private TextField ruaField;
+    @FXML private TextField numeroField;
+    @FXML private TextField complementoField;
+    @FXML private TextField bairroField;
+    @FXML private TextField cidadeField;
+    @FXML private TextField estadoField;
+    @FXML private Button pagamentoButton;
 
     private final CarrinhoManager carrinhoManager = CarrinhoManager.getInstance();
 
@@ -60,12 +45,43 @@ public class CarrinhoController {
 
     @FXML
     private void handleIrParaPagamento(ActionEvent event) {
-        if (ruaField.getText().trim().isEmpty() || numeroField.getText().trim().isEmpty() || bairroField.getText().trim().isEmpty() || cidadeField.getText().trim().isEmpty() || estadoField.getText().trim().isEmpty() || cepField.getText().trim().isEmpty()) {
+        // 1. Validação de campos vazios
+        if (ruaField.getText().trim().isEmpty() || numeroField.getText().trim().isEmpty() ||
+                bairroField.getText().trim().isEmpty() || cidadeField.getText().trim().isEmpty() ||
+                estadoField.getText().trim().isEmpty() || cepField.getText().trim().isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Campos Incompletos", "Por favor, preencha todos os campos de endereço antes de prosseguir.");
             return;
         }
 
-        Endereco enderecoDeEntrega = new Endereco(ruaField.getText(), numeroField.getText(), complementoField.getText(), bairroField.getText(), cidadeField.getText(), estadoField.getText(), cepField.getText());
+        // 2. VERIFICAÇÃO DE ESTOQUE ANTES DE NAVEGAR
+        try {
+            ProdutoDAO produtoDAO = new ProdutoDAO();
+            for (Map.Entry<Produto, Integer> entry : carrinhoManager.getItens().entrySet()) {
+                Produto pDoCarrinho = entry.getKey();
+                int qtdDesejada = entry.getValue();
+
+                // Busca o produto atualizado direto do banco de dados
+                Produto pDoBanco = produtoDAO.findById(pDoCarrinho.getId());
+
+                if (pDoBanco == null || pDoBanco.getQuantidade() < qtdDesejada) {
+                    int estoqueDisponivel = (pDoBanco != null) ? pDoBanco.getQuantidade() : 0;
+                    showAlert(Alert.AlertType.ERROR, "Estoque Insuficiente",
+                            "Infelizmente o produto '" + pDoCarrinho.getNome() + "' não possui estoque suficiente.\n" +
+                                    "Disponível: " + estoqueDisponivel + " unidade(s).");
+                    return; // Interrompe o processo e não vai para a tela de pagamento
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao verificar estoque no banco de dados.");
+            return;
+        }
+
+        // 3. Se passou pela validação de estoque, salva o endereço e prossegue
+        Endereco enderecoDeEntrega = new Endereco(
+                ruaField.getText(), numeroField.getText(), complementoField.getText(),
+                bairroField.getText(), cidadeField.getText(), estadoField.getText(), cepField.getText()
+        );
 
         carrinhoManager.setEnderecoEntrega(enderecoDeEntrega);
 
@@ -148,11 +164,9 @@ public class CarrinhoController {
         infoVBox.getChildren().addAll(nomeLabel, descricaoLabel, precoLabel);
 
         VBox controlesVBox = new VBox(5.0);
-
         controlesVBox.setAlignment(Pos.CENTER_RIGHT);
         controlesVBox.setPadding(new Insets(0, 15, 0, 0));
 
-        // inicio: box elementos da quantidade
         HBox qtdHBox = new HBox(5.0);
         qtdHBox.setAlignment(Pos.CENTER);
         qtdHBox.setMinWidth(180.0);
@@ -162,14 +176,8 @@ public class CarrinhoController {
         qtdLabel.setFont(new Font(15.0));
 
         Button upButton = new Button("+");
-
-        upButton.setPrefSize(18, 18);
-
-        upButton.setStyle("-fx-background-color: #00A60E; -fx-background-radius: 5; -fx-cursor: hand;");
-
-        upButton.setTextFill(javafx.scene.paint.Color.WHITE);
-        upButton.setFont(new Font("System Bold", 16.0));
-
+        upButton.setPrefSize(30, 30);
+        upButton.setStyle("-fx-background-color: #00A60E; -fx-background-radius: 5; -fx-cursor: hand; -fx-text-fill: white; -fx-font-weight: bold;");
         upButton.setOnAction(e -> {
             carrinhoManager.incrementarQuantidade(produto);
             popularItensCarrinho();
@@ -177,33 +185,27 @@ public class CarrinhoController {
 
         TextField qtdTextField = new TextField(String.valueOf(quantidade));
         qtdTextField.setAlignment(Pos.CENTER);
-        qtdTextField.setPrefSize(30.0, 30.0);
+        qtdTextField.setPrefSize(40.0, 30.0);
+        qtdTextField.setEditable(false);
 
         Button downButton = new Button("-");
-        downButton.setPrefSize(18, 18);
-        downButton.setStyle("-fx-background-color: #DC3545; -fx-background-radius: 5; -fx-cursor: hand;");
-
-        downButton.setFont(new Font("System Bold", 16.0));
-
-        downButton.setTextFill(javafx.scene.paint.Color.WHITE);
+        downButton.setPrefSize(30, 30);
+        downButton.setStyle("-fx-background-color: #DC3545; -fx-background-radius: 5; -fx-cursor: hand; -fx-text-fill: white; -fx-font-weight: bold;");
         downButton.setOnAction(e -> {
             carrinhoManager.decrementarQuantidade(produto);
             popularItensCarrinho();
         });
 
-        // final: box elementos da quantidade
         qtdHBox.getChildren().addAll(qtdLabel, downButton, qtdTextField, upButton);
 
         Button removerButton = new Button("Remover");
-        removerButton.setStyle("-fx-background-color: #DC3545; -fx-background-radius: 8; -fx-cursor: hand;");
-        removerButton.setTextFill(javafx.scene.paint.Color.WHITE);
-        removerButton.setFont(new Font("System Bold", 14.0));
+        removerButton.setStyle("-fx-background-color: #DC3545; -fx-background-radius: 8; -fx-cursor: hand; -fx-text-fill: white; -fx-font-weight: bold;");
         removerButton.setOnAction(e -> {
             carrinhoManager.removerProduto(produto);
             popularItensCarrinho();
         });
 
-        HBox.setMargin(removerButton, new Insets(0, 15, 0, 0));
+        VBox.setMargin(removerButton, new Insets(10, 0, 0, 0));
         controlesVBox.getChildren().addAll(qtdHBox, removerButton);
 
         hBox.getChildren().addAll(imageView, infoVBox, controlesVBox);
@@ -215,11 +217,9 @@ public class CarrinhoController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-
         if (itensCarrinhoVBox.getScene() != null) {
             alert.initOwner(itensCarrinhoVBox.getScene().getWindow());
         }
-
         alert.showAndWait();
     }
 }

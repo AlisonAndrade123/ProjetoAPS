@@ -2,46 +2,45 @@ package br.edu.ifpb.lojavirtual.model;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-public class NotaFiscal {
-    private static final AtomicLong contadorId = new AtomicLong(1);
-    private final long numero;
-    private final LocalDateTime dataEmissao;
-    private final double valorTotal;
-    private final String clienteNome;
-    private final List<Produto> produtos;
-    private final Endereco enderecoEntrega;
 
-    public NotaFiscal(double valorTotal, String clienteNome, List<Produto> produtos, Endereco enderecoEntrega) {
-        this.enderecoEntrega = enderecoEntrega;
-        this.numero = contadorId.getAndIncrement();
-        this.dataEmissao = LocalDateTime.now();
-        this.valorTotal = valorTotal;
+public class NotaFiscal {
+    private String numero;
+    private LocalDateTime dataEmissao;
+    private String clienteNome;
+    private List<Produto> produtos;
+    private double valorTotal;
+    private Endereco enderecoEntrega;
+
+    // Construtor vazio (Necessário para o Service)
+    public NotaFiscal() {
+    }
+
+    // Construtor completo (opcional, mas bom ter)
+    public NotaFiscal(String numero, LocalDateTime dataEmissao, String clienteNome, List<Produto> produtos, double valorTotal, Endereco enderecoEntrega) {
+        this.numero = numero;
+        this.dataEmissao = dataEmissao;
         this.clienteNome = clienteNome;
         this.produtos = produtos;
+        this.valorTotal = valorTotal;
+        this.enderecoEntrega = enderecoEntrega;
     }
 
-    public long getNumero() {
-        return numero;
-    }
+    // Getters e Setters (Essenciais para resolver os erros de "cannot find symbol")
+    public String getNumero() { return numero; }
+    public void setNumero(String numero) { this.numero = numero; }
 
-    public LocalDateTime getDataEmissao() {
-        return dataEmissao;
-    }
+    public LocalDateTime getDataEmissao() { return dataEmissao; }
+    public void setDataEmissao(LocalDateTime dataEmissao) { this.dataEmissao = dataEmissao; }
 
-    public double getValorTotal() {
-        return valorTotal;
-    }
+    public String getClienteNome() { return clienteNome; }
+    public void setClienteNome(String clienteNome) { this.clienteNome = clienteNome; }
 
-    public String getClienteNome() {
-        return clienteNome;
-    }
+    public List<Produto> getProdutos() { return produtos; }
+    public void setProdutos(List<Produto> produtos) { this.produtos = produtos; }
 
-    public List<Produto> getProdutos() {
-        return produtos;
-    }
+    public double getValorTotal() { return valorTotal; }
+    public void setValorTotal(double valorTotal) { this.valorTotal = valorTotal; }
 
-    public Endereco getEnderecoEntrega() {
-        return enderecoEntrega;
-    }
+    public Endereco getEnderecoEntrega() { return enderecoEntrega; }
+    public void setEnderecoEntrega(Endereco enderecoEntrega) { this.enderecoEntrega = enderecoEntrega; }
 }

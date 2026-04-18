@@ -1,29 +1,31 @@
 package br.edu.ifpb.lojavirtual.model;
+
 public class Usuario {
     private int id;
     private String nome;
     private String email;
     private String senha;
-    private boolean isAdmin;
+    private PerfilUsuario perfil; // Atributo atualizado (usando o Enum)
 
     public Usuario() {
     }
 
-    public Usuario(String nome, String email, String senha, boolean isAdmin) {
+    // Construtor sem ID (para novos cadastros)
+    public Usuario(String nome, String email, String senha, PerfilUsuario perfil) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
-        this.isAdmin = isAdmin;
+        this.perfil = perfil;
     }
 
-    public Usuario(int id, String nome, String email, String senha, boolean isAdmin) {
+    // Construtor com ID (para buscar do banco de dados)
+    public Usuario(int id, String nome, String email, String senha, PerfilUsuario perfil) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.senha = senha;
-        this.isAdmin = isAdmin;
+        this.perfil = perfil;
     }
-
 
     public int getId() {
         return id;
@@ -41,10 +43,14 @@ public class Usuario {
         return senha;
     }
 
-    public boolean isAdmin() {
-        return isAdmin;
+    public PerfilUsuario getPerfil() {
+        return perfil;
     }
 
+    // Método mantido para não quebrar suas validações de Login
+    public boolean isAdmin() {
+        return this.perfil != null && this.perfil == PerfilUsuario.ADMIN;
+    }
 
     public void setId(int id) {
         this.id = id;
@@ -62,16 +68,17 @@ public class Usuario {
         this.senha = senha;
     }
 
-    public void setAdmin(boolean admin) {
-        isAdmin = admin;
+    public void setPerfil(PerfilUsuario perfil) {
+        this.perfil = perfil;
     }
+
     @Override
     public String toString() {
         return "Usuario{" +
                 "id=" + id +
                 ", nome='" + nome + '\'' +
                 ", email='" + email + '\'' +
-                ", isAdmin=" + isAdmin +
+                ", perfil=" + perfil + // Atualizado no toString
                 '}';
     }
 }

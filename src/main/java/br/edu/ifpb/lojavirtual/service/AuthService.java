@@ -1,6 +1,7 @@
 package br.edu.ifpb.lojavirtual.service;
 
 import br.edu.ifpb.lojavirtual.dao.UsuarioDAO;
+import br.edu.ifpb.lojavirtual.model.PerfilUsuario;
 import br.edu.ifpb.lojavirtual.model.Usuario;
 import br.edu.ifpb.lojavirtual.util.AppException;
 
@@ -79,7 +80,8 @@ public class AuthService {
             throw new AppException("Formato de e-mail inválido.");
         }
 
-        Usuario novoUsuario = new Usuario(nome, email, senha, isAdmin);
+        PerfilUsuario perfil = isAdmin ? PerfilUsuario.ADMIN : PerfilUsuario.CLIENTE;
+        Usuario novoUsuario = new Usuario(nome, email, senha, perfil);
         return usuarioDAO.save(novoUsuario);
     }
 

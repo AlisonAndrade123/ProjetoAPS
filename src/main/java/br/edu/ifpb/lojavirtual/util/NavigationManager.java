@@ -11,6 +11,10 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.io.IOException;
+
+/**
+ * Gerencia a navegação entre telas e a abertura de modais.
+ */
 public class NavigationManager {
     private static NavigationManager instance;
     private Stage primaryStage;
@@ -51,13 +55,11 @@ public class NavigationManager {
 
     private Scene getScene(Parent root) {
         Scene scene;
-        // Verifica se o Stage (janela) JÁ TEM uma Scene.
+        // Verifica se o Stage (janela) já tem uma Scene.
         if (primaryStage.getScene() == null) {
-            // Se for a primeira vez (ex: abrindo a tela de login), cria a cena normalmente.
             scene = new Scene(root);
         } else {
-            // Se já estamos navegando, cria a nova cena USANDO O TAMANHO DA CENA ANTIGA.
-            // Isso preserva o estado da janela (maximizada, redimensionada, etc.).
+            // Preserva o tamanho atual da janela ao navegar
             scene = new Scene(root, primaryStage.getScene().getWidth(), primaryStage.getScene().getHeight());
         }
         return scene;
@@ -76,10 +78,11 @@ public class NavigationManager {
             modalStage.initOwner(ownerWindow);
             modalStage.initModality(Modality.APPLICATION_MODAL);
 
-            if (controller instanceof CadastrarProdutoController) {
-                ((CadastrarProdutoController) controller).setStage(modalStage);
-                ((CadastrarProdutoController) controller).setProdutoDAO(new ProdutoDAO());
-                ((CadastrarProdutoController) controller).setCategorias(CategoriasUtil.getCategorias());
+            // ATUALIZADO: Usando Pattern Matching e removendo setCategorias
+            if (controller instanceof CadastrarProdutoController cadastrarController) {
+                cadastrarController.setStage(modalStage);
+                cadastrarController.setProdutoDAO(new ProdutoDAO());
+                // Não precisamos mais de setCategorias, o controller busca do banco no initialize()
             }
 
             return controller;
@@ -96,7 +99,6 @@ public class NavigationManager {
     public void navigateToAdminView() {
         navigateTo("/br/edu/ifpb/lojavirtual/view/AdminView.fxml", "Administração - Loja Virtual");
     }
-
 
     public void navigateToProductsView() {
         navigateTo("/br/edu/ifpb/lojavirtual/view/ProdutosView.fxml", "Nossa Loja");

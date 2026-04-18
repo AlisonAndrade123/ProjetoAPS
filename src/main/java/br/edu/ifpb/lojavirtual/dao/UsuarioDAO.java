@@ -1,11 +1,13 @@
 package br.edu.ifpb.lojavirtual.dao;
 
+import br.edu.ifpb.lojavirtual.model.PerfilUsuario;
 import br.edu.ifpb.lojavirtual.model.Usuario;
 import br.edu.ifpb.lojavirtual.util.AppException;
 import br.edu.ifpb.lojavirtual.util.DatabaseManager;
 
 import java.sql.*;
 import java.util.Optional;
+
 public class UsuarioDAO {
 
     public Usuario autenticar(String email, String senha) {
@@ -20,13 +22,7 @@ public class UsuarioDAO {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                Usuario usuario = new Usuario();
-                usuario.setId(rs.getInt("id"));
-                usuario.setNome(rs.getString("nome"));
-                usuario.setEmail(rs.getString("email"));
-                usuario.setSenha(rs.getString("senha"));
-                usuario.setAdmin(rs.getBoolean("is_admin"));
-                return usuario;
+                return extrairUsuarioDoResultSet(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -44,18 +40,31 @@ public class UsuarioDAO {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                Usuario usuario = new Usuario();
-                usuario.setId(rs.getInt("id"));
-                usuario.setNome(rs.getString("nome"));
-                usuario.setEmail(rs.getString("email"));
-                usuario.setSenha(rs.getString("senha"));
-                usuario.setAdmin(rs.getBoolean("is_admin"));
-                return Optional.of(usuario);
+                return Optional.of(extrairUsuarioDoResultSet(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return Optional.empty();
+    }
+
+    /**
+     * NOVO MÉTODO: Busca o usuário pelo ID.
+     * Necessário para gerar a Nota Fiscal com os dados do cliente.
+     */
+    public Usuario findById(int id) throws SQLException {
+        String sql = "SELECT id, nome, email, senha, is_admin FROM usuarios WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extrairUsuarioDoResultSet(rs);
+                }
+            }
+        }
+        return null;
     }
 
     public Usuario save(Usuario usuario) throws AppException {
@@ -89,6 +98,22 @@ public class UsuarioDAO {
             e.printStackTrace();
             throw new AppException("Erro ao cadastrar usuário: " + e.getMessage());
         }
+        return usuario;
+    }
+
+    /**
+     * Método auxiliar privado para evitar repetição de código ao ler dados do banco.
+     */
+    private Usuario extrairUsuarioDoResultSet(ResultSet rs) throws SQLException {
+        Usuario usuario = new Usuario();
+        usuario.setId(rs.getInt("id"));
+        usuario.setNome(rs.getString("nome"));
+        usuario.setEmail(rs.getString("email"));
+        usuario.setSenha(rs.getString("senha"));
+
+        boolean isAdminDB = rs.getBoolean("is_admin");
+        usuario.setPerfil(isAdminDB ? PerfilUsuario.ADMIN : PerfilUsuario.CLIENTE);
+
         return usuario;
     }
 }

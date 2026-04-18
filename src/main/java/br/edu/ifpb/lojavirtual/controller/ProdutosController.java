@@ -1,11 +1,12 @@
 package br.edu.ifpb.lojavirtual.controller;
 
+import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importe adicionado
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
+import br.edu.ifpb.lojavirtual.model.Categoria; // Importe adicionado
 import br.edu.ifpb.lojavirtual.model.Produto;
 import br.edu.ifpb.lojavirtual.model.Usuario;
 import br.edu.ifpb.lojavirtual.service.AuthService;
 import br.edu.ifpb.lojavirtual.util.CarrinhoManager;
-import br.edu.ifpb.lojavirtual.util.CategoriasUtil;
 import br.edu.ifpb.lojavirtual.util.NavigationManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -30,24 +31,20 @@ public class ProdutosController {
     @FXML private Button historyButton;
     @FXML private Button profileButton;
 
-
     private Usuario usuarioLogado;
     private ProdutoDAO produtoDAO;
 
     @FXML
     public void initialize() {
-        // Configura as dependências
         this.usuarioLogado = AuthService.getInstance().getUsuarioLogado();
         this.produtoDAO = new ProdutoDAO();
 
-        // Atualiza a UI com base no usuário
         if (this.usuarioLogado != null) {
             profileButton.setText("Olá, " + this.usuarioLogado.getNome().split(" ")[0]);
         } else {
             profileButton.setText("Visitante");
         }
 
-        // Configura listeners e carrega dados iniciais
         if (searchTextField != null) {
             searchTextField.textProperty().addListener((obs, oldText, newText) -> filterProducts(newText));
         }
@@ -57,70 +54,44 @@ public class ProdutosController {
 
     private void criarBotoesDeCategoria() {
         categoryHBox.getChildren().clear();
-        Button todosButton = criarBotaoEstilizado("Todos");
-        todosButton.setOnAction(event -> loadAllProducts());
+
+        // Botão "Todos"
+        Button todosButton = criarBotaoEstilizado("Todos", "Todos");
         categoryHBox.getChildren().add(todosButton);
-        List<String> categorias = CategoriasUtil.getCategorias();
-        for (String nomeCategoria : categorias) {
-            Button categoriaButton = criarBotaoEstilizado(nomeCategoria);
-            // Ao clicar, chama o método para filtrar pela categoria específica
-            categoriaButton.setOnAction(event -> filterProductsByCategory(nomeCategoria));
-            categoryHBox.getChildren().add(categoriaButton);
+
+        try {
+            // Agora as categorias vêm do banco!
+            CategoriaDAO categoriaDAO = new CategoriaDAO();
+            List<Categoria> categorias = categoriaDAO.findAll();
+
+            for (Categoria cat : categorias) {
+                Button categoriaButton = criarBotaoEstilizado(cat.getNome(), cat);
+                categoryHBox.getChildren().add(categoriaButton);
+            }
+        } catch (SQLException e) {
+            showAlert(AlertType.ERROR, "Erro", "Não foi possível carregar as categorias.");
+            e.printStackTrace();
         }
     }
 
-    private Button criarBotaoEstilizado(String nome) {
+    private Button criarBotaoEstilizado(String nome, Object userData) {
         Button button = new Button(nome);
-        button.setUserData(nome);
+        button.setUserData(userData);
         button.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #00A60E; -fx-border-radius: 20; -fx-border-width: 2; -fx-text-fill: #333333; -fx-padding: 8 20; -fx-cursor: hand;");
         button.setFont(new Font("System", 16.0));
         button.setOnAction(this::handleCategoryButtonAction);
         return button;
     }
 
-    private VBox createProductCard(Produto produto) {
-        VBox card = new VBox(10);
-        card.setAlignment(javafx.geometry.Pos.TOP_CENTER);
-
-        card.setPrefWidth(280.0);
-        card.setPrefHeight(380.0);
-
-        card.setStyle("-fx-background-color: white; -fx-border-color: #00A60E; -fx-border-radius: 10; -fx-border-width: 1; -fx-padding: 15;");
-
-        ImageView imageView = new ImageView(produto.getImage());
-        imageView.setFitHeight(150.0);
-        imageView.setFitWidth(180.0);
-        imageView.setPickOnBounds(true);
-        imageView.setPreserveRatio(true);
-
-        Label nameLabel = new Label(produto.getNome());
-        nameLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 5px 0;");
-        nameLabel.setWrapText(true);
-
-        VBox.setMargin(nameLabel, new Insets(15, 0, 0, 0));
-
-        Label priceLabel = new Label("R$ " + String.format("%.2f", produto.getPreco()).replace('.', ','));
-        priceLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #00A60E;");
-
-        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
-        VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-
-        Button buyButton = new Button("Comprar");
-        buyButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 8px 16px; -fx-cursor: hand;");
-        buyButton.setOnAction(event -> handleComprarProduto(produto));
-
-        card.getChildren().addAll(imageView, nameLabel, priceLabel, spacer, buyButton);
-        return card;
-    }
-
     @FXML
     private void handleCategoryButtonAction(ActionEvent event) {
         Button clickedButton = (Button) event.getSource();
-        String category = (String) clickedButton.getUserData();
-        if ("Todos".equals(category)) {
+        Object userData = clickedButton.getUserData();
+
+        if (userData instanceof String && "Todos".equals(userData)) {
             loadAllProducts();
-        } else {
-            filterProductsByCategory(category);
+        } else if (userData instanceof Categoria) {
+            filterProductsByCategory(((Categoria) userData).getId());
         }
     }
 
@@ -148,13 +119,14 @@ public class ProdutosController {
         }
     }
 
-    private void filterProductsByCategory(String category) {
+    // Alterado para filtrar pelo ID da categoria
+    private void filterProductsByCategory(int idCategoria) {
         if (produtoDAO != null) {
             try {
-                List<Produto> produtos = produtoDAO.findByCategory(category);
+                List<Produto> produtos = produtoDAO.findByCategoryId(idCategoria);
                 displayProducts(produtos);
             } catch (SQLException e) {
-                showAlert(AlertType.ERROR, "Erro de Banco de Dados", "Erro ao filtrar produtos por categoria: " + e.getMessage());
+                showAlert(AlertType.ERROR, "Erro de Banco de Dados", "Erro ao filtrar produtos: " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -174,6 +146,37 @@ public class ProdutosController {
         }
     }
 
+    private VBox createProductCard(Produto produto) {
+        VBox card = new VBox(10);
+        card.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+        card.setPrefWidth(280.0);
+        card.setPrefHeight(380.0);
+        card.setStyle("-fx-background-color: white; -fx-border-color: #00A60E; -fx-border-radius: 10; -fx-border-width: 1; -fx-padding: 15;");
+
+        ImageView imageView = new ImageView(produto.getImage());
+        imageView.setFitHeight(150.0);
+        imageView.setFitWidth(180.0);
+        imageView.setPickOnBounds(true);
+        imageView.setPreserveRatio(true);
+
+        Label nameLabel = new Label(produto.getNome());
+        nameLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 5px 0;");
+        nameLabel.setWrapText(true);
+        VBox.setMargin(nameLabel, new Insets(15, 0, 0, 0));
+
+        Label priceLabel = new Label("R$ " + String.format("%.2f", produto.getPreco()).replace('.', ','));
+        priceLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #00A60E;");
+
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+
+        Button buyButton = new Button("Comprar");
+        buyButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 8px 16px; -fx-cursor: hand;");
+        buyButton.setOnAction(event -> handleComprarProduto(produto));
+
+        card.getChildren().addAll(imageView, nameLabel, priceLabel, spacer, buyButton);
+        return card;
+    }
 
     private void handleComprarProduto(Produto produto) {
         if (this.usuarioLogado == null) {

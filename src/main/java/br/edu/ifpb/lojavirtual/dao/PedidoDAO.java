@@ -1,5 +1,6 @@
 package br.edu.ifpb.lojavirtual.dao;
 
+import br.edu.ifpb.lojavirtual.model.Categoria;
 import br.edu.ifpb.lojavirtual.model.Pedido;
 import br.edu.ifpb.lojavirtual.model.PedidoItem;
 import br.edu.ifpb.lojavirtual.model.Produto;
@@ -13,10 +14,6 @@ import java.util.Map;
 
 public class PedidoDAO {
 
-    /**
-     * Salva um pedido completo (cabeçalho e itens) no banco de dados.
-     * Esta operação é transacional.
-     */
     public void salvar(Pedido pedido) throws SQLException {
         String sqlPedido = "INSERT INTO pedidos (usuario_id, data_pedido, valor_total) VALUES (?, ?, ?)";
         String sqlItem = "INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)";
@@ -24,10 +21,8 @@ public class PedidoDAO {
         Connection conn = null;
         try {
             conn = DatabaseManager.getConnection();
-            // Inicia a transação
             conn.setAutoCommit(false);
 
-            //  Insere o cabeçalho do pedido e obtém o ID gerado
             try (PreparedStatement pstmtPedido = conn.prepareStatement(sqlPedido, Statement.RETURN_GENERATED_KEYS)) {
                 pstmtPedido.setInt(1, pedido.getUsuarioId());
                 pstmtPedido.setString(2, pedido.getDataPedido());
@@ -43,23 +38,19 @@ public class PedidoDAO {
                 }
             }
 
-            //  Insere cada item do pedido
             try (PreparedStatement pstmtItem = conn.prepareStatement(sqlItem)) {
                 for (PedidoItem item : pedido.getItens()) {
                     pstmtItem.setInt(1, pedido.getId());
                     pstmtItem.setInt(2, item.getProduto().getId());
                     pstmtItem.setInt(3, item.getQuantidade());
                     pstmtItem.setDouble(4, item.getPrecoUnitario());
-                    pstmtItem.addBatch(); // Adiciona a inserção ao lote
+                    pstmtItem.addBatch();
                 }
-                pstmtItem.executeBatch(); // Executa todas as inserções de itens de uma vez
+                pstmtItem.executeBatch();
             }
-
-            // Se tudo deu certo, efetiva a transação
             conn.commit();
 
         } catch (SQLException e) {
-            // Se algo deu errado, desfaz a transação
             if (conn != null) {
                 try {
                     conn.rollback();
@@ -68,11 +59,11 @@ public class PedidoDAO {
                 }
             }
             e.printStackTrace();
-            throw e; // Lança a exceção para o controller saber que falhou
+            throw e;
         } finally {
             if (conn != null) {
                 try {
-                    conn.setAutoCommit(true); // Restaura o modo padrão
+                    conn.setAutoCommit(true);
                     conn.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -83,7 +74,19 @@ public class PedidoDAO {
 
     public List<Pedido> buscarPorUsuario(int usuarioId) throws SQLException {
         Map<Integer, Pedido> pedidosMap = new LinkedHashMap<>();
-        String sql = "SELECT ped.id as pedido_id, ped.data_pedido, ped.valor_total, item.id as item_id, item.quantidade as item_quantidade, item.preco_unitario, prod.id as produto_id, prod.nome as produto_nome, prod.descricao as produto_descricao, prod.preco as produto_preco, prod.quantidade as produto_quantidade_estoque, prod.categoria as produto_categoria, prod.nome_arquivo_imagem FROM pedidos ped JOIN pedido_itens item ON ped.id = item.pedido_id JOIN produtos prod ON item.produto_id = prod.id WHERE ped.usuario_id = ? ORDER BY ped.id DESC, item.id ASC";
+
+        // SQL ATUALIZADO: Fazendo JOIN com categorias para buscar a categoria correta do produto
+        String sql = "SELECT ped.id as pedido_id, ped.data_pedido, ped.valor_total, " +
+                "item.id as item_id, item.quantidade as item_quantidade, item.preco_unitario, " +
+                "prod.id as produto_id, prod.nome as produto_nome, prod.descricao as produto_descricao, " +
+                "prod.preco as produto_preco, prod.quantidade as produto_quantidade_estoque, " +
+                "cat.id as id_categoria, cat.nome as categoria_nome, prod.nome_arquivo_imagem " +
+                "FROM pedidos ped " +
+                "JOIN pedido_itens item ON ped.id = item.pedido_id " +
+                "JOIN produtos prod ON item.produto_id = prod.id " +
+                "JOIN categorias cat ON prod.id_categoria = cat.id " +
+                "WHERE ped.usuario_id = ? ORDER BY ped.id DESC, item.id ASC";
+
         try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, usuarioId);
             ResultSet rs = pstmt.executeQuery();
@@ -102,14 +105,19 @@ public class PedidoDAO {
                     }
                     return p;
                 });
+
                 Produto produto = new Produto();
                 produto.setId(rs.getInt("produto_id"));
                 produto.setNome(rs.getString("produto_nome"));
                 produto.setDescricao(rs.getString("produto_descricao"));
                 produto.setPreco(rs.getDouble("produto_preco"));
-                produto.setCategoria(rs.getString("produto_categoria"));
                 produto.setQuantidade(rs.getInt("produto_quantidade_estoque"));
                 produto.setNomeArquivoImagem(rs.getString("nome_arquivo_imagem"));
+
+                // --- ATUALIZADO AQUI ---
+                Categoria categoria = new Categoria(rs.getInt("id_categoria"), rs.getString("categoria_nome"));
+                produto.setCategoria(categoria);
+
                 PedidoItem item = new PedidoItem();
                 item.setId(rs.getInt("item_id"));
                 item.setQuantidade(rs.getInt("item_quantidade"));

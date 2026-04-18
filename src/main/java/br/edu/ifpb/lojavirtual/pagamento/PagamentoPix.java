@@ -1,5 +1,6 @@
 package br.edu.ifpb.lojavirtual.pagamento;
 
+import br.edu.ifpb.lojavirtual.model.Pedido;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -18,6 +19,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class PagamentoPix implements MetodoPagamento {
+
     @Override
     public String getNome() {
         return "PIX";
@@ -30,40 +32,37 @@ public class PagamentoPix implements MetodoPagamento {
         layout.setAlignment(Pos.CENTER);
 
         Label instrucao1 = new Label("1. Escaneie o código QR com seu celular");
+        instrucao1.setStyle("-fx-font-weight: bold;");
+
         ImageView qrCodeImageView = new ImageView();
         try {
             Image qrCode = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/br/edu/ifpb/lojavirtual/imagens/qr.jpeg")));
             qrCodeImageView.setImage(qrCode);
         } catch (Exception e) {
-            System.err.println("Erro ao carregar a imagem do QR Code: " + e.getMessage());
+            System.err.println("Erro ao carregar QR: " + e.getMessage());
         }
         qrCodeImageView.setFitHeight(150.0);
         qrCodeImageView.setFitWidth(150.0);
 
         Label instrucao2 = new Label("2. Ou copie o código abaixo:");
 
-        TextField pixCodeTextField = new TextField(UUID.randomUUID().toString().replace("-", ""));
+        String payloadPix = "00020126330014BR.GOV.BCB.PIX0111" + UUID.randomUUID().toString().replace("-", "").substring(0,25).toUpperCase();
+        TextField pixCodeTextField = new TextField(payloadPix);
         pixCodeTextField.setEditable(false);
         pixCodeTextField.setPrefWidth(300.0);
-        pixCodeTextField.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-radius: 5; -fx-background-radius: 5; -fx-font-family: 'monospace';");
 
         Button copiarChaveButton = new Button("Copiar");
-        copiarChaveButton.setStyle("-fx-background-color: #e9e9e9; -fx-text-fill: #333; -fx-background-radius: 5; -fx-cursor: hand;");
+        copiarChaveButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-cursor: hand;");
 
         copiarChaveButton.setOnAction(event -> {
-
             Clipboard clipboard = Clipboard.getSystemClipboard();
             ClipboardContent content = new ClipboardContent();
-
-
             content.putString(pixCodeTextField.getText());
             clipboard.setContent(content);
 
-
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Sucesso");
-            alert.setHeaderText(null);
-            alert.setContentText("Chave PIX copiada para a área de transferência!");
+            alert.setContentText("Código PIX copiado com sucesso!");
             alert.showAndWait();
         });
 
@@ -72,5 +71,11 @@ public class PagamentoPix implements MetodoPagamento {
 
         layout.getChildren().addAll(instrucao1, qrCodeImageView, instrucao2, copyBox);
         return layout;
+    }
+
+    @Override
+    public void processar(Pedido pedido) throws Exception {
+        // No PIX simulado, apenas registramos que o pagamento foi "solicitado"
+        System.out.println("Pagamento PIX registrado para o pedido: " + pedido.getId());
     }
 }

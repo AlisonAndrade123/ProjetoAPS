@@ -12,7 +12,11 @@ public class Produto {
     private String descricao;
     private double preco;
     private int quantidade;
-    private String categoria;
+
+    // --- ALTERAÇÃO AQUI ---
+    // Substituímos String por Categoria para relacionar os objetos
+    private Categoria categoria;
+
     private String nomeArquivoImagem;
     private transient Image image;
 
@@ -59,11 +63,12 @@ public class Produto {
         this.quantidade = quantidade;
     }
 
-    public String getCategoria() {
+    // --- GETTER E SETTER ATUALIZADOS ---
+    public Categoria getCategoria() {
         return categoria;
     }
 
-    public void setCategoria(String categoria) {
+    public void setCategoria(Categoria categoria) {
         this.categoria = categoria;
     }
 
@@ -120,12 +125,14 @@ public class Produto {
 
     @Override
     public String toString() {
+        // Atualizado para pegar o nome da categoria com segurança
+        String nomeCategoria = (categoria != null) ? categoria.getNome() : "Sem categoria";
         return "Produto{" +
                 "id=" + id +
                 ", nome='" + nome + '\'' +
                 ", preco=" + preco +
                 ", quantidade=" + quantidade +
-                ", categoria='" + categoria + '\'' +
+                ", categoria='" + nomeCategoria + '\'' +
                 '}';
     }
 }

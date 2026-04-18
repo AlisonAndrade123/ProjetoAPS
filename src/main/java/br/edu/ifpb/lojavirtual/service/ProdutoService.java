@@ -18,11 +18,9 @@ public class ProdutoService {
         return produtoDAO.findAll();
     }
 
-    public List<Produto> getProdutosPorCategoria(String categoria) throws SQLException {
-        if (categoria == null || categoria.trim().isEmpty() || "Todos".equalsIgnoreCase(categoria.trim())) {
-            return produtoDAO.findAll();
-        }
-        return produtoDAO.findByCategory(categoria);
+    // Alterado para receber o ID da categoria
+    public List<Produto> getProdutosPorCategoria(int idCategoria) throws SQLException {
+        return produtoDAO.findByCategoryId(idCategoria);
     }
 
     public List<Produto> searchProdutos(String searchTerm) throws SQLException {

@@ -20,6 +20,7 @@ public class DatabaseManager {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
+            // 1. Tabela de Usuários
             String createUsersTable = "CREATE TABLE IF NOT EXISTS usuarios (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "nome TEXT NOT NULL," +
@@ -28,16 +29,51 @@ public class DatabaseManager {
                     "is_admin INTEGER DEFAULT 0)";
             stmt.execute(createUsersTable);
 
+            // 2. NOVA: Tabela de Categorias
+            String createCategoriasTable = "CREATE TABLE IF NOT EXISTS categorias (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "nome TEXT UNIQUE NOT NULL)";
+            stmt.execute(createCategoriasTable);
+
+            // 3. Tabela de Produtos (Atualizada com id_categoria e quantidade)
             String createProductsTable = "CREATE TABLE IF NOT EXISTS produtos (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "nome TEXT NOT NULL," +
                     "descricao TEXT," +
                     "preco REAL NOT NULL," +
                     "quantidade INTEGER NOT NULL," +
-                    "categoria TEXT NOT NULL," +
-                    "nome_arquivo_imagem TEXT)";
+                    "id_categoria INTEGER NOT NULL," + // Alterado para ID referenciando categorias
+                    "nome_arquivo_imagem TEXT," +
+                    "FOREIGN KEY (id_categoria) REFERENCES categorias(id))";
             stmt.execute(createProductsTable);
 
+            // 4. NOVA: Tabela de Endereços
+            String createEnderecosTable = "CREATE TABLE IF NOT EXISTS enderecos (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "rua TEXT NOT NULL," +
+                    "numero TEXT NOT NULL," +
+                    "complemento TEXT," +
+                    "bairro TEXT NOT NULL," +
+                    "cidade TEXT NOT NULL," +
+                    "estado TEXT NOT NULL," +
+                    "cep TEXT NOT NULL," +
+                    "id_usuario INTEGER NOT NULL," +
+                    "FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE)";
+            stmt.execute(createEnderecosTable);
+
+            // 5. NOVA: Tabela de Avaliações
+            String createAvaliacoesTable = "CREATE TABLE IF NOT EXISTS avaliacoes (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "comentario TEXT," +
+                    "nota INTEGER NOT NULL," +
+                    "data_avaliacao TEXT NOT NULL," +
+                    "id_usuario INTEGER NOT NULL," +
+                    "id_produto INTEGER NOT NULL," +
+                    "FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE," +
+                    "FOREIGN KEY (id_produto) REFERENCES produtos(id) ON DELETE CASCADE)";
+            stmt.execute(createAvaliacoesTable);
+
+            // 6. Tabela de Pedidos
             String createPedidosTable = "CREATE TABLE IF NOT EXISTS pedidos (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "usuario_id INTEGER NOT NULL," +
@@ -46,6 +82,7 @@ public class DatabaseManager {
                     "FOREIGN KEY (usuario_id) REFERENCES usuarios(id))";
             stmt.execute(createPedidosTable);
 
+            // 7. Tabela de Itens do Pedido
             String createPedidoItensTable = "CREATE TABLE IF NOT EXISTS pedido_itens (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "pedido_id INTEGER NOT NULL," +
@@ -56,10 +93,9 @@ public class DatabaseManager {
                     "FOREIGN KEY (produto_id) REFERENCES produtos(id))";
             stmt.execute(createPedidoItensTable);
 
-            // Inserir um usuário administrador padrão se não existir
+            // INSERÇÕES PADRÃO
             inserirAdminPadrao(conn);
-
-            // Inserir produtos padrão se a tabela estiver vazia
+            inserirCategoriasPadrao(conn); // Precisa rodar antes dos produtos
             inserirProdutosPadrao(conn);
 
         } catch (SQLException e) {
@@ -92,10 +128,34 @@ public class DatabaseManager {
     }
 
     /**
+     * Insere as categorias padrão no banco de dados.
+     */
+    private static void inserirCategoriasPadrao(Connection conn) throws SQLException {
+        String checkCategoriasSql = "SELECT COUNT(*) FROM categorias";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(checkCategoriasSql)) {
+            if (rs.next() && rs.getInt(1) > 0) {
+                return; // Se já houver categorias, não faz nada
+            }
+        }
+
+        String[] categoriasIniciais = {
+                "Teclado", "Mouse", "Monitor", "Processador",
+                "GPU", "Gabinete", "Placa mãe", "Memória RAM"
+        };
+
+        String insertCategoriaSql = "INSERT INTO categorias (nome) VALUES (?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(insertCategoriaSql)) {
+            for (String categoria : categoriasIniciais) {
+                pstmt.setString(1, categoria);
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+        }
+    }
+
+    /**
      * Insere uma lista de produtos padrão na tabela 'produtos' se ela estiver vazia.
-     *
-     * @param conn A conexão com o banco de dados.
-     * @throws SQLException Se ocorrer um erro de SQL.
      */
     private static void inserirProdutosPadrao(Connection conn) throws SQLException {
         String checkProductsSql = "SELECT COUNT(*) FROM produtos";
@@ -106,7 +166,10 @@ public class DatabaseManager {
             }
         }
 
-        String insertProductSql = "INSERT INTO produtos (nome, descricao, preco, quantidade, categoria, nome_arquivo_imagem) VALUES (?, ?, ?, ?, ?, ?)";
+        // Subquery (SELECT id FROM categorias WHERE nome = ?) acha o ID da categoria com base na String passada
+        String insertProductSql = "INSERT INTO produtos (nome, descricao, preco, quantidade, id_categoria, nome_arquivo_imagem) " +
+                "VALUES (?, ?, ?, ?, (SELECT id FROM categorias WHERE nome = ?), ?)";
+
         try (PreparedStatement pstmt = conn.prepareStatement(insertProductSql)) {
 
             Object[][] produtos = {
@@ -131,7 +194,7 @@ public class DatabaseManager {
                 pstmt.setString(2, (String) produto[1]);
                 pstmt.setDouble(3, (Double) produto[2]);
                 pstmt.setInt(4, (Integer) produto[3]);
-                pstmt.setString(5, (String) produto[4]);
+                pstmt.setString(5, (String) produto[4]); // A string aqui procura o id na subquery!
                 pstmt.setString(6, (String) produto[5]);
                 pstmt.addBatch();
             }

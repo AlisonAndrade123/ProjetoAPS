@@ -1,62 +1,45 @@
 package br.edu.ifpb.lojavirtual.controller;
 
-import br.edu.ifpb.lojavirtual.dao.PedidoDAO;
 import br.edu.ifpb.lojavirtual.model.*;
 import br.edu.ifpb.lojavirtual.pagamento.MetodoPagamento;
 import br.edu.ifpb.lojavirtual.pagamento.PagamentoBoleto;
 import br.edu.ifpb.lojavirtual.pagamento.PagamentoPix;
 import br.edu.ifpb.lojavirtual.service.AuthService;
-import br.edu.ifpb.lojavirtual.service.NotaFiscalService;
+import br.edu.ifpb.lojavirtual.service.PedidoService;
 import br.edu.ifpb.lojavirtual.util.CarrinhoManager;
-import br.edu.ifpb.lojavirtual.util.GeradorNotaFiscalPDF;
 import br.edu.ifpb.lojavirtual.util.NavigationManager;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class PagamentoController {
 
-    @FXML
-    private VBox paymentOptionsVBox;
-    @FXML
-    private VBox resumoVBox;
-    @FXML
-    private Label tituloLabel;
-    @FXML
-    private Label resumoTituloLabel;
-    @FXML
-    private Label totalTituloLabel;
-    @FXML
-    private Label totalLabel;
-    @FXML
-    private Label subtotalLabel;
-    @FXML
-    private Label freteLabel;
-    @FXML
-    private Button confirmarPagamentoButton;
-    @FXML
-    private HBox opcoesPagamentoHBox;
-    @FXML
-    private StackPane painelMetodoPagamento;
+    @FXML private VBox paymentOptionsVBox;
+    @FXML private VBox resumoVBox;
+    @FXML private VBox processamentoBox; // Vinculado ao FXML atualizado
+    @FXML private Label tituloLabel;
+    @FXML private Label resumoTituloLabel;
+    @FXML private Label totalTituloLabel;
+    @FXML private Label totalLabel;
+    @FXML private Label subtotalLabel;
+    @FXML private Label freteLabel;
+    @FXML private Button confirmarPagamentoButton;
+    @FXML private Button btnVoltar; // Vinculado ao FXML
+    @FXML private HBox opcoesPagamentoHBox;
+    @FXML private StackPane painelMetodoPagamento;
 
     private final CarrinhoManager carrinhoManager = CarrinhoManager.getInstance();
-    private final NotaFiscalService notaFiscalService = new NotaFiscalService();
     private ToggleGroup toggleGroup;
     private double valorTotalCompra;
-    private final PedidoDAO pedidoDAO = new PedidoDAO();
-
 
     public void inicializar(double valorTotal) {
         this.valorTotalCompra = valorTotal;
@@ -73,10 +56,18 @@ public class PagamentoController {
         configurarMetodosPagamento();
     }
 
+    /**
+     * Retorna para a tela do carrinho sem perder os dados.
+     */
+    @FXML
+    void handleVoltar(ActionEvent event) {
+        NavigationManager.getInstance().navigateToCart();
+    }
 
     @FXML
     void handleConfirmarPagamento() {
-        confirmarPagamentoButton.setDisable(true);
+        // Interface: Desabilita controles e mostra carregamento
+        setEstadoProcessamento(true);
 
         Usuario usuarioLogado = AuthService.getInstance().getUsuarioLogado();
         Map<Produto, Integer> itensDoCarrinhoMap = carrinhoManager.getItens();
@@ -84,73 +75,68 @@ public class PagamentoController {
 
         if (usuarioLogado == null || endereco == null) {
             showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Dados do usuário ou endereço não encontrados.");
-            confirmarPagamentoButton.setDisable(false);
+            setEstadoProcessamento(false);
             return;
         }
 
+        // Criar o Pedido
         Pedido novoPedido = new Pedido();
         novoPedido.setUsuarioId(usuarioLogado.getId());
         novoPedido.setValorTotal(this.valorTotalCompra);
-        novoPedido.setDataPedido(LocalDateTime.now().toString());
+        novoPedido.setDataPedido(java.time.LocalDateTime.now().toString());
+        novoPedido.setEndereco(endereco);
 
-        List<PedidoItem> itensDoPedido = itensDoCarrinhoMap.entrySet().stream()
-                .map(entry -> {
-                    Produto produto = entry.getKey();
-                    int quantidade = entry.getValue();
-                    PedidoItem item = new PedidoItem();
-                    item.setProduto(produto);
-                    item.setQuantidade(quantidade);
-                    item.setPrecoUnitario(produto.getPreco());
-                    return item;
-                })
-                .collect(Collectors.toList());
+        List<PedidoItem> itensDoPedido = new ArrayList<>();
+        itensDoCarrinhoMap.forEach((produto, quantidade) -> {
+            PedidoItem item = new PedidoItem();
+            item.setProduto(produto);
+            item.setQuantidade(quantidade);
+            item.setPrecoUnitario(produto.getPreco());
+            itensDoPedido.add(item);
+        });
         novoPedido.setItens(itensDoPedido);
 
-        try {
-            pedidoDAO.salvar(novoPedido);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro de Banco de Dados", "Falha ao registrar o pedido no sistema. A compra foi cancelada.");
-            confirmarPagamentoButton.setDisable(false);
-            return;
-        }
+        // --- BACKGROUND THREAD: Executa sem travar a interface ---
+        new Thread(() -> {
+            try {
+                // 1. Banco de Dados + Baixa Automática de Estoque
+                PedidoService pedidoService = new PedidoService();
+                pedidoService.finalizarPedido(novoPedido);
 
-        List<Produto> produtosParaNota = new ArrayList<>();
-        itensDoCarrinhoMap.forEach((p, q) -> { for (int i = 0; i < q; i++) produtosParaNota.add(p); });
+                // 2. Lógica de Pagamento (Ex: Gerar e abrir o PDF do Boleto)
+                if (toggleGroup.getSelectedToggle() != null) {
+                    MetodoPagamento metodo = (MetodoPagamento) toggleGroup.getSelectedToggle().getUserData();
+                    metodo.processar(novoPedido);
+                }
 
-        NotaFiscal notaFiscal = notaFiscalService.gerarNotaFiscal(usuarioLogado, produtosParaNota, this.valorTotalCompra, endereco);
+                // 3. Sucesso: Volta para a Thread Principal para avisar o usuário
+                Platform.runLater(() -> {
+                    showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Compra finalizada com sucesso!");
+                    carrinhoManager.limparCarrinho();
+                    NavigationManager.getInstance().navigateToProductsView();
+                });
 
-        try {
-            File arquivoPdf = GeradorNotaFiscalPDF.gerarPdf(notaFiscal);
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Pagamento Realizado");
-            alert.setHeaderText("Compra finalizada e Nota Fiscal gerada!");
-            alert.setContentText("O PDF da sua nota foi salvo em sua pasta 'notas_fiscais'.");
-
-            ButtonType abrirPdfButton = new ButtonType("Abrir PDF da Nota Fiscal");
-            ButtonType fecharButton = new ButtonType("Fechar", ButtonBar.ButtonData.CANCEL_CLOSE);
-            alert.getButtonTypes().setAll(abrirPdfButton, fecharButton);
-
-            Optional<ButtonType> result = alert.showAndWait();
-            if (result.isPresent() && result.get() == abrirPdfButton) {
-                GeradorNotaFiscalPDF.abrirPdf(arquivoPdf);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    showAlert(Alert.AlertType.ERROR, "Erro na Finalização", e.getMessage());
+                    setEstadoProcessamento(false);
+                });
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível gerar ou salvar o PDF da nota fiscal.");
-        } finally {
-            carrinhoManager.limparCarrinho();
-            NavigationManager.getInstance().navigateToProductsView();
-        }
+        }).start();
     }
 
-    private void showAlert(Alert.AlertType alertType, String title, String message) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    /**
+     * Gerencia a visibilidade do carregamento e botões.
+     */
+    private void setEstadoProcessamento(boolean processando) {
+        confirmarPagamentoButton.setDisable(processando);
+        if (btnVoltar != null) btnVoltar.setDisable(processando);
+
+        if (processamentoBox != null) {
+            processamentoBox.setVisible(processando);
+            processamentoBox.setManaged(processando);
+        }
     }
 
     private void configurarMetodosPagamento() {
@@ -161,7 +147,7 @@ public class PagamentoController {
             ToggleButton tb = new ToggleButton(metodo.getNome());
             tb.setToggleGroup(toggleGroup);
             tb.setUserData(metodo);
-            tb.setStyle("-fx-font-size: 14px; -fx-cursor: hand;");
+            tb.setStyle("-fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 10 20;");
             opcoesPagamentoHBox.getChildren().add(tb);
         }
 
@@ -178,6 +164,22 @@ public class PagamentoController {
         }
     }
 
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        if (Platform.isFxApplicationThread()) {
+            exibirAlerta(alertType, title, message);
+        } else {
+            Platform.runLater(() -> exibirAlerta(alertType, title, message));
+        }
+    }
+
+    private void exibirAlerta(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
     private void aplicarEstilos() {
         String cardStyle = "-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);";
         paymentOptionsVBox.setStyle(cardStyle);
@@ -187,7 +189,9 @@ public class PagamentoController {
         totalTituloLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         totalLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #00A60E;");
         confirmarPagamentoButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 25; -fx-cursor: hand;");
-        confirmarPagamentoButton.setOnMouseEntered(e -> confirmarPagamentoButton.setStyle("-fx-background-color: #008c0c; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 25; -fx-cursor: hand;"));
-        confirmarPagamentoButton.setOnMouseExited(e -> confirmarPagamentoButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 25; -fx-cursor: hand;"));
+
+        if (btnVoltar != null) {
+            btnVoltar.setStyle("-fx-background-color: #6c757d; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;");
+        }
     }
 }
