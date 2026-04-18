@@ -269,4 +269,9 @@ public class AdminController {
             productTilePane.getChildren().add(noProductsLabel);
         }
     }
+    @FXML
+    void handleLogout(ActionEvent event) {
+        AuthService.getInstance().logout(); // Limpa a sessão
+        NavigationManager.getInstance().navigateToLogin(); // Volta para o login
+    }
 }

@@ -209,4 +209,10 @@ public class ProdutosController {
         alert.initOwner(productTilePane.getScene().getWindow());
         alert.showAndWait();
     }
+    @FXML
+    void handleLogout(ActionEvent event) {
+        // Opcional: Mostrar uma confirmação
+        AuthService.getInstance().logout();
+        NavigationManager.getInstance().navigateToLogin();
+    }
 }

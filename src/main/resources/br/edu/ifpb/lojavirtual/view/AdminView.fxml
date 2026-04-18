@@ -20,8 +20,10 @@
                 <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
             </padding>
             <children>
+                <!-- Barra de Pesquisa -->
                 <AnchorPane style="-fx-background-color: #FFFFFF; -fx-border-radius: 15; -fx-background-radius: 15;" HBox.hgrow="ALWAYS">
                     <children>
+                        <!-- Texto corrigido: você -->
                         <TextField fx:id="searchTextField" promptText="O que você quer pesquisar?" style="-fx-background-color: transparent; -fx-border-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="45.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
                             <font><Font size="22.0" /></font>
                         </TextField>
@@ -30,7 +32,14 @@
                         </ImageView>
                     </children>
                 </AnchorPane>
+
+                <!-- Botão Adicionar -->
                 <Button fx:id="addProductButton" mnemonicParsing="false" onAction="#handleAddProduct" prefHeight="45.0" prefWidth="192.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Adicionar Produto" textFill="#00A60E">
+                    <font><Font name="System Bold" size="16.0" /></font>
+                </Button>
+
+                <!-- NOVO: Botão Logout -->
+                <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" prefHeight="45.0" prefWidth="100.0" style="-fx-background-color: #F43C3C; -fx-background-radius: 10; -fx-cursor: hand;" text="Sair" textFill="WHITE">
                     <font><Font name="System Bold" size="16.0" /></font>
                 </Button>
             </children>

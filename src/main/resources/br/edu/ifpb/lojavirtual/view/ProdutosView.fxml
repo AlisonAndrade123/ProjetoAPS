@@ -15,49 +15,53 @@
 
 <BorderPane style="-fx-background-color: #00A60E;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.edu.ifpb.lojavirtual.controller.ProdutosController">
     <top>
-        <!--
-          BorderPane é usado para o cabeçalho. Isso facilita o alinhamento:
-             - LEFT: Botão de Perfil
-             - CENTER: Barra de Pesquisa (que irá expandir)
-             - RIGHT: Botões de Ação
-        -->
+        <!-- Cabeçalho da Loja -->
         <BorderPane>
             <padding>
                 <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
             </padding>
             <left>
-                <Button fx:id="profileButton" mnemonicParsing="false" prefHeight="45.0" prefWidth="190.0" style="-fx-background-color: #FFFFFF; -fx-text-fill: #00A60E; -fx-font-weight: bold; -fx-font-size: 16px; -fx-border-radius: 8; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 0 25;" text="Perfil" BorderPane.alignment="CENTER">
+                <!-- Botão de Perfil/Nome do Usuário -->
+                <Button fx:id="profileButton" mnemonicParsing="false" prefHeight="45.0" prefWidth="190.0" style="-fx-background-color: #FFFFFF; -fx-text-fill: #00A60E; -fx-font-weight: bold; -fx-font-size: 16px; -fx-border-radius: 8; -fx-background-radius: 8; -fx-cursor: hand;" text="Perfil" BorderPane.alignment="CENTER">
                     <font>
                         <Font name="System Bold" size="16.0" />
                     </font>
                 </Button>
             </left>
             <right>
-                <HBox alignment="CENTER_RIGHT" spacing="15.0" BorderPane.alignment="CENTER">
+                <!-- Botões de Ação (Histórico, Carrinho e SAIR) -->
+                <HBox alignment="CENTER_RIGHT" spacing="10.0" BorderPane.alignment="CENTER">
                     <children>
                         <Button fx:id="historyButton" mnemonicParsing="false" onAction="#handleHistoryButtonAction" style="-fx-background-color: transparent; -fx-cursor: hand;">
                             <graphic>
-                                <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
                                         <Image url="@../imagens/historico.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
                         </Button>
-                        <Button fx:id="cartButton" mnemonicParsing="false" onAction="#handleCartButtonAction" prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: #00A60E;">
+                        <Button fx:id="cartButton" mnemonicParsing="false" onAction="#handleCartButtonAction" style="-fx-background-color: transparent; -fx-cursor: hand;">
                             <graphic>
-                                <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
                                         <Image url="@../imagens/carrinho-de-compras.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
                         </Button>
+
+                        <!-- NOVO: Botão Logout para o Cliente -->
+                        <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" prefHeight="40.0" prefWidth="80.0" style="-fx-background-color: #F43C3C; -fx-background-radius: 8; -fx-cursor: hand; -fx-text-fill: white; -fx-font-weight: bold;" text="Sair">
+                            <HBox.margin>
+                                <Insets left="5.0" />
+                            </HBox.margin>
+                        </Button>
                     </children>
                 </HBox>
             </right>
             <center>
-
+                <!-- Barra de Pesquisa -->
                 <AnchorPane maxWidth="800.0" style="-fx-background-color: #FFFFFF; -fx-border-radius: 15; -fx-background-radius: 15;" BorderPane.alignment="CENTER">
                     <BorderPane.margin>
                         <Insets left="20.0" right="20.0" />
@@ -65,10 +69,10 @@
                     <children>
                         <TextField fx:id="searchTextField" promptText="O que você quer comprar hoje?" style="-fx-background-color: transparent; -fx-border-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
                             <font>
-                                <Font size="22.0" />
+                                <Font size="20.0" />
                             </font>
                         </TextField>
-                        <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="9.0" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="9.0">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="9.0" AnchorPane.leftAnchor="15.0" AnchorPane.topAnchor="9.0">
                             <image>
                                 <Image url="@../imagens/lupa.png" />
                             </image>
@@ -79,18 +83,16 @@
         </BorderPane>
     </top>
     <center>
-        <!--
-          VBox organiza o conteúdo principal verticalmente: primeiro a barra de categorias, depois a grade de produtos.
-        -->
         <VBox>
             <children>
-                <ScrollPane fx:id="categoryScrollPane" minHeight="-Infinity" prefHeight="72" style="-fx-background-color: #FFFFFF; -fx-border-color: #00A60E; -fx-border-width: 0 0 2 0;" vbarPolicy="NEVER">
+                <!-- Barra de Categorias -->
+                <ScrollPane fx:id="categoryScrollPane" hbarPolicy="AS_NEEDED" minHeight="-Infinity" prefHeight="72" style="-fx-background-color: #FFFFFF; -fx-border-color: #00A60E; -fx-border-width: 0 0 2 0;" vbarPolicy="NEVER">
                     <content>
                         <HBox fx:id="categoryHBox" alignment="CENTER_LEFT" spacing="15.0" style="-fx-padding: 0 15 0 15;" />
                     </content>
                 </ScrollPane>
-                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-padding: 0;"
-                            VBox.vgrow="ALWAYS">
+                <!-- Grade de Produtos -->
+                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-padding: 0;" VBox.vgrow="ALWAYS">
                     <content>
                         <TilePane fx:id="productTilePane" alignment="CENTER" hgap="20.0" prefTileHeight="350.0" prefTileWidth="280.0" style="-fx-padding: 20;" vgap="20.0" />
                     </content>
