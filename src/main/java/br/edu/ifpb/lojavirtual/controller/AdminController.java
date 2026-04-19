@@ -1,8 +1,10 @@
 package br.edu.ifpb.lojavirtual.controller;
 
-import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importe adicionado
+import br.edu.ifpb.lojavirtual.dao.CatalogoDAO;
+import br.edu.ifpb.lojavirtual.dao.CategoriaDAO;
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
-import br.edu.ifpb.lojavirtual.model.Categoria; // Importe adicionado
+import br.edu.ifpb.lojavirtual.model.Catalogo;
+import br.edu.ifpb.lojavirtual.model.Categoria;
 import br.edu.ifpb.lojavirtual.model.Produto;
 import br.edu.ifpb.lojavirtual.model.Usuario;
 import br.edu.ifpb.lojavirtual.service.AuthService;
@@ -21,6 +23,7 @@ import javafx.stage.Window;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AdminController {
 
@@ -32,9 +35,21 @@ public class AdminController {
     private HBox categoryHBox;
     @FXML
     private TilePane productTilePane;
+    @FXML
+    private ComboBox<Catalogo> cbCatalogosAdmin;
 
     private Usuario adminLogado;
     private ProdutoDAO produtoDAO;
+    private CatalogoDAO catalogoDAO = new CatalogoDAO();
+
+    private Catalogo catalogoAtivo = null;
+    private Categoria categoriaAtiva = null;
+    private String termoBusca = "";
+
+    @FXML
+    private Label lblTituloSessao;
+    @FXML
+    private Button btnLimparFiltro;
 
     @FXML
     public void initialize() {
@@ -46,9 +61,17 @@ public class AdminController {
             return;
         }
 
-        searchTextField.textProperty().addListener((obs, oldText, newText) -> filterProducts(newText));
+        // Listener da Busca por Texto Unificado
+        searchTextField.textProperty().addListener((obs, oldText, newText) -> {
+            this.termoBusca = newText;
+            aplicarFiltrosAdmin();
+        });
+
         criarBotoesDeCategoria();
-        loadAllProducts();
+        carregarCatalogosNoMenu();
+
+        // Carrega a tela inicialmente
+        aplicarFiltrosAdmin();
     }
 
     @FXML
@@ -79,10 +102,11 @@ public class AdminController {
                 modalStage.showAndWait();
             }
         } else {
-            showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Não foi possível carregar a tela de cadastro."); // Encoding corrigido
+            showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Não foi possível carregar a tela de cadastro.");
         }
 
-        loadAllProducts();
+        // Atualiza a tela mantendo os filtros atuais após fechar o modal
+        aplicarFiltrosAdmin();
     }
 
     private void showAlert(Alert.AlertType alertType, String title, String message) {
@@ -101,7 +125,7 @@ public class AdminController {
         alert.setContentText(content);
 
         ButtonType buttonTypeSim = new ButtonType("Sim");
-        ButtonType buttonTypeNao = new ButtonType("Não"); // Encoding corrigido
+        ButtonType buttonTypeNao = new ButtonType("Não");
 
         alert.getButtonTypes().setAll(buttonTypeSim, buttonTypeNao);
 
@@ -113,17 +137,14 @@ public class AdminController {
     private void criarBotoesDeCategoria() {
         categoryHBox.getChildren().clear();
 
-        // Botão "Todos" recebe uma String como identificador (UserData)
         Button todosButton = criarBotaoEstilizado("Todos", "Todos");
         categoryHBox.getChildren().add(todosButton);
 
         try {
-            // Busca as categorias reais no banco de dados
             CategoriaDAO categoriaDAO = new CategoriaDAO();
             List<Categoria> categorias = categoriaDAO.findAll();
 
             for (Categoria categoria : categorias) {
-                // Passa o objeto Categoria inteiro como UserData do botão!
                 Button categoriaButton = criarBotaoEstilizado(categoria.getNome(), categoria);
                 categoryHBox.getChildren().add(categoriaButton);
             }
@@ -133,7 +154,6 @@ public class AdminController {
         }
     }
 
-    // Método atualizado para receber o Object userData (pode ser String "Todos" ou um objeto Categoria)
     private Button criarBotaoEstilizado(String nome, Object userData) {
         Button button = new Button(nome);
         button.setUserData(userData);
@@ -146,15 +166,16 @@ public class AdminController {
     @FXML
     private void handleCategoryFilter(ActionEvent event) {
         Button clickedButton = (Button) event.getSource();
-        Object userData = clickedButton.getUserData(); // Pegamos o objeto salvo no botão
+        Object userData = clickedButton.getUserData();
 
         if (userData instanceof String && "Todos".equals(userData)) {
-            loadAllProducts();
+            this.categoriaAtiva = null; // Zera a categoria
         } else if (userData instanceof Categoria) {
-            // Se for uma Categoria, pegamos o ID dela para filtrar no banco!
-            Categoria categoriaSelecionada = (Categoria) userData;
-            filterProductsByCategory(categoriaSelecionada.getId());
+            this.categoriaAtiva = (Categoria) userData; // Salva a categoria clicada
         }
+
+        // Aplica o filtro unificado
+        aplicarFiltrosAdmin();
     }
 
     private void handleRemoveProduct(Produto produto) {
@@ -162,7 +183,7 @@ public class AdminController {
             try {
                 if (produtoDAO.delete(produto.getId())) {
                     showAlert(Alert.AlertType.INFORMATION, "Remover Produto", "Produto '" + produto.getNome() + "' removido com sucesso!");
-                    loadAllProducts();
+                    aplicarFiltrosAdmin(); // Atualiza a tela mantendo os filtros
                 } else {
                     showAlert(Alert.AlertType.ERROR, "Remover Produto", "Falha ao remover o produto.");
                 }
@@ -219,40 +240,42 @@ public class AdminController {
         return card;
     }
 
-    private void loadAllProducts() {
-        if (produtoDAO != null) {
-            try {
-                List<Produto> produtos = produtoDAO.findAll();
-                displayProducts(produtos);
-            } catch (SQLException e) {
-                showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage());
-                e.printStackTrace();
-            }
-        }
-    }
+    // =======================================================================
+    // MOTOR DE FILTROS UNIFICADOS (IDÊNTICO AO DO CLIENTE)
+    // =======================================================================
+    private void aplicarFiltrosAdmin() {
+        try {
+            List<Produto> produtos;
 
-    private void filterProducts(String searchText) {
-        if (produtoDAO != null) {
-            try {
-                List<Produto> produtos = produtoDAO.search(searchText);
-                displayProducts(produtos);
-            } catch (SQLException e) {
-                showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage());
-                e.printStackTrace();
+            // 1. Busca os produtos base (Catálogo ativo ou Todos)
+            if (catalogoAtivo != null && !catalogoAtivo.getNome().equals("Todos os Produtos")) {
+                produtos = produtoDAO.listarPorCatalogo(catalogoAtivo.getId());
+            } else {
+                produtos = produtoDAO.findAll();
             }
-        }
-    }
 
-    // MÉTODO ATUALIZADO: Agora recebe o ID da Categoria em vez de uma String
-    private void filterProductsByCategory(int idCategoria) {
-        if (produtoDAO != null) {
-            try {
-                List<Produto> produtos = produtoDAO.findByCategoryId(idCategoria);
-                displayProducts(produtos);
-            } catch (SQLException e) {
-                showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage());
-                e.printStackTrace();
+            // 2. Cruza com a Categoria (se houver alguma selecionada)
+            if (categoriaAtiva != null) {
+                produtos = produtos.stream()
+                        .filter(p -> p.getCategoria() != null && p.getCategoria().getId() == categoriaAtiva.getId())
+                        .collect(Collectors.toList());
             }
+
+            // 3. Cruza com o Texto de Busca (se houver algo digitado)
+            if (termoBusca != null && !termoBusca.trim().isEmpty()) {
+                String termo = termoBusca.toLowerCase();
+                produtos = produtos.stream()
+                        // Removida a verificação da descrição para ficar igual ao cliente
+                        .filter(p -> p.getNome().toLowerCase().contains(termo))
+                        .collect(Collectors.toList());
+            }
+
+            // 4. Atualiza a tela
+            displayProducts(produtos);
+            atualizarFeedbackVisual();
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao aplicar filtros cruzados no admin: " + e.getMessage());
         }
     }
 
@@ -269,9 +292,93 @@ public class AdminController {
             productTilePane.getChildren().add(noProductsLabel);
         }
     }
+
+    private void carregarCatalogosNoMenu() {
+        try {
+            List<Catalogo> catalogos = catalogoDAO.listarTodos();
+
+            Catalogo todos = new Catalogo();
+            todos.setNome("Todos os Produtos");
+            catalogos.add(0, todos);
+
+            cbCatalogosAdmin.getItems().setAll(catalogos);
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar catálogos no menu: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void filtrarPorCatalogo(ActionEvent event) {
+        Catalogo selecionado = cbCatalogosAdmin.getSelectionModel().getSelectedItem();
+        if (selecionado == null) return;
+
+        this.catalogoAtivo = selecionado;
+        aplicarFiltrosAdmin();
+    }
+
     @FXML
     void handleLogout(ActionEvent event) {
-        AuthService.getInstance().logout(); // Limpa a sessão
-        NavigationManager.getInstance().navigateToLogin(); // Volta para o login
+        AuthService.getInstance().logout();
+        NavigationManager.getInstance().navigateToLogin();
+    }
+
+    @FXML
+    public void handleManageCatalogs(javafx.event.ActionEvent event) {
+        Window ownerWindow = ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+
+        NavigationManager.getInstance().setupModal(
+                "/br/edu/ifpb/lojavirtual/view/GerenciarCatalogoView.fxml",
+                "Gerenciar Catálogos",
+                ownerWindow
+        );
+
+        carregarCatalogosNoMenu();
+        // Atualiza a tela caso um catálogo tenha sido alterado/excluído
+        aplicarFiltrosAdmin();
+    }
+
+    @FXML
+    public void limparFiltro(ActionEvent event) {
+        // Limpa a interface
+        cbCatalogosAdmin.getSelectionModel().clearSelection();
+        if (searchTextField != null) {
+            searchTextField.clear();
+        }
+
+        // Zera as variáveis de estado
+        this.catalogoAtivo = null;
+        this.categoriaAtiva = null;
+        this.termoBusca = "";
+
+        // Aplica (vai trazer tudo de volta)
+        aplicarFiltrosAdmin();
+    }
+
+    private void atualizarFeedbackVisual() {
+        if (lblTituloSessao == null || btnLimparFiltro == null) return;
+
+        StringBuilder titulo = new StringBuilder();
+        boolean temFiltro = false;
+
+        // Monta o texto do Catálogo
+        if (catalogoAtivo != null && !catalogoAtivo.getNome().equals("Todos os Produtos")) {
+            titulo.append("Catálogo: ").append(catalogoAtivo.getNome());
+            temFiltro = true;
+        }
+
+        // Monta o texto da Categoria
+        if (categoriaAtiva != null) {
+            if (temFiltro) titulo.append("  |  ");
+            titulo.append("Categoria: ").append(categoriaAtiva.getNome());
+            temFiltro = true;
+        }
+
+        // Se não tiver nenhum filtro
+        if (!temFiltro) {
+            titulo.append("Gerenciando Todos os Produtos");
+        }
+
+        lblTituloSessao.setText(titulo.toString());
+        btnLimparFiltro.setVisible(temFiltro); // Mostra o botão vermelho só se tiver filtro
     }
 }

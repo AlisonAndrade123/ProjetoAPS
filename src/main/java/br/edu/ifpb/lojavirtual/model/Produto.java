@@ -1,8 +1,15 @@
 package br.edu.ifpb.lojavirtual.model;
 
+import br.edu.ifpb.lojavirtual.util.DatabaseManager;
 import javafx.scene.image.Image;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Produto {
@@ -111,6 +118,38 @@ public class Produto {
         }
     }
 
+    // Adicione isso no seu ProdutoDAO.java
+    public List<Produto> listarPorCatalogo(int idCatalogo) throws SQLException {
+        List<Produto> produtos = new ArrayList<>();
+
+        // A mágica acontece aqui: juntamos as tabelas 'produtos' e 'catalogo_produtos'
+        String sql = "SELECT p.* FROM produtos p " +
+                "INNER JOIN catalogo_produtos cp ON p.id = cp.id_produto " +
+                "WHERE cp.id_catalogo = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idCatalogo);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    // Crie o objeto Produto.
+                    // ATENÇÃO: Adapte este bloco de acordo com os atributos que você já tem
+                    // no seu Produto e como o seu banco retorna (ex: getDouble ou getBigDecimal para preço).
+                    Produto p = new Produto();
+                    p.setId(rs.getInt("id"));
+                    p.setNome(rs.getString("nome"));
+                    p.setDescricao(rs.getString("descricao"));
+                    p.setPreco(rs.getDouble("preco")); // Baseado no seu diagrama de classes
+                    p.setQuantidade(rs.getInt("quantidade"));
+
+                    produtos.add(p);
+                }
+            }
+        }
+        return produtos;
+    }
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -125,14 +164,8 @@ public class Produto {
 
     @Override
     public String toString() {
-        // Atualizado para pegar o nome da categoria com segurança
         String nomeCategoria = (categoria != null) ? categoria.getNome() : "Sem categoria";
-        return "Produto{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", preco=" + preco +
-                ", quantidade=" + quantidade +
-                ", categoria='" + nomeCategoria + '\'' +
-                '}';
+
+        return String.format("%s - R$ %.2f (%s)", nome, preco, nomeCategoria);
     }
 }

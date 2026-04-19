@@ -78,11 +78,14 @@ public class NavigationManager {
             modalStage.initOwner(ownerWindow);
             modalStage.initModality(Modality.APPLICATION_MODAL);
 
-            // ATUALIZADO: Usando Pattern Matching e removendo setCategorias
+            // Seu código original:
             if (controller instanceof CadastrarProdutoController cadastrarController) {
                 cadastrarController.setStage(modalStage);
-                cadastrarController.setProdutoDAO(new ProdutoDAO());
-                // Não precisamos mais de setCategorias, o controller busca do banco no initialize()
+                cadastrarController.setProdutoDAO(new br.edu.ifpb.lojavirtual.dao.ProdutoDAO());
+            }
+            // NOVO: Adicionamos o controller do Catálogo aqui!
+            else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarCatalogoController catalogoController) {
+                catalogoController.setStage(modalStage);
             }
 
             return controller;

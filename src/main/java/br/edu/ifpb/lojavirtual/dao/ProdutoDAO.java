@@ -161,4 +161,27 @@ public class ProdutoDAO {
 
         return produto;
     }
+
+    public List<Produto> listarPorCatalogo(int idCatalogo) throws SQLException {
+        List<Produto> produtos = new ArrayList<>();
+
+        String sql = "SELECT p.id, p.nome, p.descricao, p.preco, p.quantidade, p.id_categoria, c.nome AS categoria_nome, p.nome_arquivo_imagem " +
+                "FROM produtos p " +
+                "JOIN categorias c ON p.id_categoria = c.id " +
+                "INNER JOIN catalogo_produtos cp ON p.id = cp.id_produto " +
+                "WHERE cp.id_catalogo = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idCatalogo);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    produtos.add(extrairProdutoDoResultSet(rs));
+                }
+            }
+        }
+        return produtos;
+    }
 }
