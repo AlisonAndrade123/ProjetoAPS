@@ -165,31 +165,20 @@ public class ProdutoDAO {
     public List<Produto> listarPorCatalogo(int idCatalogo) throws SQLException {
         List<Produto> produtos = new ArrayList<>();
 
-        // A consulta usa INNER JOIN para pegar os produtos que estão na tabela intermediária com o ID do catálogo
-        String sql = "SELECT p.* FROM produtos p " +
+        String sql = "SELECT p.id, p.nome, p.descricao, p.preco, p.quantidade, p.id_categoria, c.nome AS categoria_nome, p.nome_arquivo_imagem " +
+                "FROM produtos p " +
+                "JOIN categorias c ON p.id_categoria = c.id " +
                 "INNER JOIN catalogo_produtos cp ON p.id = cp.id_produto " +
                 "WHERE cp.id_catalogo = ?";
 
-        try (Connection conn = br.edu.ifpb.lojavirtual.util.DatabaseManager.getConnection();
+        try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, idCatalogo);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Produto p = new Produto();
-                    // ATENÇÃO: Verifique se os nomes dos setters (ex: setPreco)
-                    // e os tipos (ex: getDouble ou getBigDecimal) batem com o seu model atual.
-                    p.setId(rs.getInt("id"));
-                    p.setNome(rs.getString("nome"));
-                    p.setDescricao(rs.getString("descricao"));
-                    p.setPreco(rs.getDouble("preco"));
-                    p.setQuantidade(rs.getInt("quantidade"));
-
-                    // Se você tiver uma string para a imagem:
-                    p.setNomeArquivoImagem(rs.getString("nome_arquivo_imagem"));
-
-                    produtos.add(p);
+                    produtos.add(extrairProdutoDoResultSet(rs));
                 }
             }
         }
