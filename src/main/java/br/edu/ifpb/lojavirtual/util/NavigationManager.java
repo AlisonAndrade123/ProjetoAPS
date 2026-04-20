@@ -55,11 +55,9 @@ public class NavigationManager {
 
     private Scene getScene(Parent root) {
         Scene scene;
-        // Verifica se o Stage (janela) já tem uma Scene.
         if (primaryStage.getScene() == null) {
             scene = new Scene(root);
         } else {
-            // Preserva o tamanho atual da janela ao navegar
             scene = new Scene(root, primaryStage.getScene().getWidth(), primaryStage.getScene().getHeight());
         }
         return scene;
@@ -83,21 +81,23 @@ public class NavigationManager {
                 cadastrarController.setStage(modalStage);
                 cadastrarController.setProdutoDAO(new ProdutoDAO());
             }
-            // Controller do Catálogo
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarCatalogoController catalogoController) {
                 catalogoController.setStage(modalStage);
             }
-            // Controller de Detalhes/Avaliação do Produto
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.ProdutoDetalhesController detalhesController) {
                 detalhesController.setStage(modalStage);
             }
-            // NOVO: Controller de Gerenciamento de Categorias
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarCategoriasController categoriaController) {
                 categoriaController.setStage(modalStage);
+            }
+            // NOVO: Adicionado suporte para a Gestão de Pedidos
+            else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarPedidosController ordersController) {
+                ordersController.setStage(modalStage);
             }
 
             return controller;
         } catch (IOException e) {
+            System.err.println("Erro ao carregar o modal FXML: " + fxmlPath);
             e.printStackTrace();
             return null;
         }

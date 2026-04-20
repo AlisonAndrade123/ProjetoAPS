@@ -25,7 +25,7 @@ public class PagamentoController {
 
     @FXML private VBox paymentOptionsVBox;
     @FXML private VBox resumoVBox;
-    @FXML private VBox processamentoBox; // Vinculado ao FXML atualizado
+    @FXML private VBox processamentoBox;
     @FXML private Label tituloLabel;
     @FXML private Label resumoTituloLabel;
     @FXML private Label totalTituloLabel;
@@ -33,7 +33,7 @@ public class PagamentoController {
     @FXML private Label subtotalLabel;
     @FXML private Label freteLabel;
     @FXML private Button confirmarPagamentoButton;
-    @FXML private Button btnVoltar; // Vinculado ao FXML
+    @FXML private Button btnVoltar;
     @FXML private HBox opcoesPagamentoHBox;
     @FXML private StackPane painelMetodoPagamento;
 
@@ -56,9 +56,6 @@ public class PagamentoController {
         configurarMetodosPagamento();
     }
 
-    /**
-     * Retorna para a tela do carrinho sem perder os dados.
-     */
     @FXML
     void handleVoltar(ActionEvent event) {
         NavigationManager.getInstance().navigateToCart();
@@ -66,7 +63,6 @@ public class PagamentoController {
 
     @FXML
     void handleConfirmarPagamento() {
-        // Interface: Desabilita controles e mostra carregamento
         setEstadoProcessamento(true);
 
         Usuario usuarioLogado = AuthService.getInstance().getUsuarioLogado();
@@ -86,6 +82,9 @@ public class PagamentoController {
         novoPedido.setDataPedido(java.time.LocalDateTime.now().toString());
         novoPedido.setEndereco(endereco);
 
+        // --- DEFINIÇÃO DO STATUS INICIAL ---
+        novoPedido.setStatus(StatusPedido.PAGO);
+
         List<PedidoItem> itensDoPedido = new ArrayList<>();
         itensDoCarrinhoMap.forEach((produto, quantidade) -> {
             PedidoItem item = new PedidoItem();
@@ -96,20 +95,20 @@ public class PagamentoController {
         });
         novoPedido.setItens(itensDoPedido);
 
-        // --- BACKGROUND THREAD: Executa sem travar a interface ---
+        // --- BACKGROUND THREAD: Processamento sem travar a UI ---
         new Thread(() -> {
             try {
-                // 1. Banco de Dados + Baixa Automática de Estoque
+                // 1. Persistência e Baixa de Estoque
                 PedidoService pedidoService = new PedidoService();
                 pedidoService.finalizarPedido(novoPedido);
 
-                // 2. Lógica de Pagamento (Ex: Gerar e abrir o PDF do Boleto)
+                // 2. Lógica do Método de Pagamento (Strategy)
                 if (toggleGroup.getSelectedToggle() != null) {
                     MetodoPagamento metodo = (MetodoPagamento) toggleGroup.getSelectedToggle().getUserData();
                     metodo.processar(novoPedido);
                 }
 
-                // 3. Sucesso: Volta para a Thread Principal para avisar o usuário
+                // 3. Sucesso na Thread Principal
                 Platform.runLater(() -> {
                     showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Compra finalizada com sucesso!");
                     carrinhoManager.limparCarrinho();
@@ -126,9 +125,6 @@ public class PagamentoController {
         }).start();
     }
 
-    /**
-     * Gerencia a visibilidade do carregamento e botões.
-     */
     private void setEstadoProcessamento(boolean processando) {
         confirmarPagamentoButton.setDisable(processando);
         if (btnVoltar != null) btnVoltar.setDisable(processando);

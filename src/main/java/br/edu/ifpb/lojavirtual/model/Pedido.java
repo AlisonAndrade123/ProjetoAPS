@@ -2,6 +2,7 @@ package br.edu.ifpb.lojavirtual.model;
 
 import java.util.List;
 public class Pedido {
+    private StatusPedido status; // Alterado de String para StatusPedido
     private Endereco endereco; // Atributo para guardar o local de entrega
     private int id; private int usuarioId; private String dataPedido; private double valorTotal; private List<PedidoItem> itens;
 
@@ -17,4 +18,6 @@ public class Pedido {
     public void setItens(List<PedidoItem> itens) { this.itens = itens; }
     public Endereco getEndereco() { return endereco; }
     public void setEndereco(Endereco endereco) { this.endereco = endereco; }
+    public StatusPedido getStatus() { return status; }
+    public void setStatus(StatusPedido status) { this.status = status; }
 }

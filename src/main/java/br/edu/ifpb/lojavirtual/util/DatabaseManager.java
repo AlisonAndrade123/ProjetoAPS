@@ -79,6 +79,7 @@ public class DatabaseManager {
                     "usuario_id INTEGER NOT NULL," +
                     "data_pedido TEXT NOT NULL," +
                     "valor_total REAL NOT NULL," +
+                    "status TEXT DEFAULT 'PENDENTE'," + // <-- NOVA COLUNA
                     "FOREIGN KEY (usuario_id) REFERENCES usuarios(id))";
             stmt.execute(createPedidosTable);
 
