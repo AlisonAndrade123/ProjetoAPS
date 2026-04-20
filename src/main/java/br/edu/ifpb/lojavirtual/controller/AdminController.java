@@ -27,16 +27,13 @@ import java.util.stream.Collectors;
 
 public class AdminController {
 
-    @FXML
-    private TextField searchTextField;
-    @FXML
-    private Button addProductButton;
-    @FXML
-    private HBox categoryHBox;
-    @FXML
-    private TilePane productTilePane;
-    @FXML
-    private ComboBox<Catalogo> cbCatalogosAdmin;
+    @FXML private TextField searchTextField;
+    @FXML private Button addProductButton;
+    @FXML private HBox categoryHBox;
+    @FXML private TilePane productTilePane;
+    @FXML private ComboBox<Catalogo> cbCatalogosAdmin;
+    @FXML private Label lblTituloSessao;
+    @FXML private Button btnLimparFiltro;
 
     private Usuario adminLogado;
     private ProdutoDAO produtoDAO;
@@ -45,11 +42,6 @@ public class AdminController {
     private Catalogo catalogoAtivo = null;
     private Categoria categoriaAtiva = null;
     private String termoBusca = "";
-
-    @FXML
-    private Label lblTituloSessao;
-    @FXML
-    private Button btnLimparFiltro;
 
     @FXML
     public void initialize() {
@@ -120,7 +112,7 @@ public class AdminController {
 
     private boolean showConfirmacao(String content) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Remover produto");
+        alert.setTitle("Confirmação");
         alert.setHeaderText(null);
         alert.setContentText(content);
 
@@ -169,12 +161,11 @@ public class AdminController {
         Object userData = clickedButton.getUserData();
 
         if (userData instanceof String && "Todos".equals(userData)) {
-            this.categoriaAtiva = null; // Zera a categoria
+            this.categoriaAtiva = null;
         } else if (userData instanceof Categoria) {
-            this.categoriaAtiva = (Categoria) userData; // Salva a categoria clicada
+            this.categoriaAtiva = (Categoria) userData;
         }
 
-        // Aplica o filtro unificado
         aplicarFiltrosAdmin();
     }
 
@@ -183,7 +174,7 @@ public class AdminController {
             try {
                 if (produtoDAO.delete(produto.getId())) {
                     showAlert(Alert.AlertType.INFORMATION, "Remover Produto", "Produto '" + produto.getNome() + "' removido com sucesso!");
-                    aplicarFiltrosAdmin(); // Atualiza a tela mantendo os filtros
+                    aplicarFiltrosAdmin();
                 } else {
                     showAlert(Alert.AlertType.ERROR, "Remover Produto", "Falha ao remover o produto.");
                 }
@@ -233,44 +224,67 @@ public class AdminController {
         editButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 6px 12px; -fx-cursor: hand;");
         editButton.setOnAction(e -> handleEditProduct(produto));
 
-        actionButtons.getChildren().addAll(removeButton, editButton);
+        // --- NOVO: Botão de Avaliações para o Admin ---
+        Button avaliacoesButton = new Button("Avaliações");
+        avaliacoesButton.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #00A60E; -fx-text-fill: #333; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 5px 10px; -fx-cursor: hand;");
+        avaliacoesButton.setOnAction(e -> abrirModalAvaliacoes(produto));
+
+        actionButtons.getChildren().addAll(avaliacoesButton, editButton, removeButton);
 
         card.getChildren().addAll(imageView, nameLabel, descriptionLabel, priceLabel, actionButtons);
 
         return card;
     }
 
+    // --- NOVO: Método que abre o modal de avaliações para o Admin ---
+    private void abrirModalAvaliacoes(Produto produto) {
+        Window ownerWindow = productTilePane.getScene().getWindow();
+
+        Object controller = NavigationManager.getInstance().setupModal(
+                "/br/edu/ifpb/lojavirtual/view/ProdutoDetalhesView.fxml",
+                "Avaliações do Produto",
+                ownerWindow
+        );
+
+        if (controller instanceof ProdutoDetalhesController detalhesController) {
+            detalhesController.setStage(detalhesController.getStage()); // Se já foi setado no setupModal
+            detalhesController.inicializarDados(produto);
+
+            Stage modalStage = detalhesController.getStage();
+            if (modalStage != null) {
+                modalStage.showAndWait();
+            }
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível abrir as avaliações do produto.");
+        }
+    }
+
     // =======================================================================
-    // MOTOR DE FILTROS UNIFICADOS (IDÊNTICO AO DO CLIENTE)
+    // MOTOR DE FILTROS UNIFICADOS
     // =======================================================================
     private void aplicarFiltrosAdmin() {
         try {
             List<Produto> produtos;
 
-            // 1. Busca os produtos base (Catálogo ativo ou Todos)
             if (catalogoAtivo != null && !catalogoAtivo.getNome().equals("Todos os Produtos")) {
                 produtos = produtoDAO.listarPorCatalogo(catalogoAtivo.getId());
             } else {
                 produtos = produtoDAO.findAll();
             }
 
-            // 2. Cruza com a Categoria (se houver alguma selecionada)
             if (categoriaAtiva != null) {
                 produtos = produtos.stream()
-                        .filter(p -> p.getCategoria() != null && p.getCategoria().getId() == categoriaAtiva.getId())
+                        .filter(p -> p.getCategoria() != null && p.getCategoria().getId().equals(categoriaAtiva.getId()))
                         .collect(Collectors.toList());
             }
 
-            // 3. Cruza com o Texto de Busca (se houver algo digitado)
             if (termoBusca != null && !termoBusca.trim().isEmpty()) {
                 String termo = termoBusca.toLowerCase();
                 produtos = produtos.stream()
-                        // Removida a verificação da descrição para ficar igual ao cliente
                         .filter(p -> p.getNome().toLowerCase().contains(termo))
                         .collect(Collectors.toList());
             }
 
-            // 4. Atualiza a tela
             displayProducts(produtos);
             atualizarFeedbackVisual();
 
@@ -333,24 +347,20 @@ public class AdminController {
         );
 
         carregarCatalogosNoMenu();
-        // Atualiza a tela caso um catálogo tenha sido alterado/excluído
         aplicarFiltrosAdmin();
     }
 
     @FXML
     public void limparFiltro(ActionEvent event) {
-        // Limpa a interface
         cbCatalogosAdmin.getSelectionModel().clearSelection();
         if (searchTextField != null) {
             searchTextField.clear();
         }
 
-        // Zera as variáveis de estado
         this.catalogoAtivo = null;
         this.categoriaAtiva = null;
         this.termoBusca = "";
 
-        // Aplica (vai trazer tudo de volta)
         aplicarFiltrosAdmin();
     }
 
@@ -360,25 +370,22 @@ public class AdminController {
         StringBuilder titulo = new StringBuilder();
         boolean temFiltro = false;
 
-        // Monta o texto do Catálogo
         if (catalogoAtivo != null && !catalogoAtivo.getNome().equals("Todos os Produtos")) {
             titulo.append("Catálogo: ").append(catalogoAtivo.getNome());
             temFiltro = true;
         }
 
-        // Monta o texto da Categoria
         if (categoriaAtiva != null) {
             if (temFiltro) titulo.append("  |  ");
             titulo.append("Categoria: ").append(categoriaAtiva.getNome());
             temFiltro = true;
         }
 
-        // Se não tiver nenhum filtro
         if (!temFiltro) {
             titulo.append("Gerenciando Todos os Produtos");
         }
 
         lblTituloSessao.setText(titulo.toString());
-        btnLimparFiltro.setVisible(temFiltro); // Mostra o botão vermelho só se tiver filtro
+        btnLimparFiltro.setVisible(temFiltro);
     }
 }
