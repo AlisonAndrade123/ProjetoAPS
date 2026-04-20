@@ -136,4 +136,22 @@ public class PedidoDAO {
         }
         return new ArrayList<>(pedidosMap.values());
     }
+    public boolean jaComprouProduto(int usuarioId, int produtoId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM pedidos p " +
+                "JOIN pedido_itens i ON p.id = i.pedido_id " +
+                "WHERE p.usuario_id = ? AND i.produto_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, usuarioId);
+            pstmt.setInt(2, produtoId);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0; // Retorna true se encontrou pelo menos 1 compra
+            }
+        }
+        return false;
+    }
 }

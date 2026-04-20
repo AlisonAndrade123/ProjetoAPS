@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox prefHeight="600.0" prefWidth="500.0" spacing="15.0" style="-fx-background-color: #F0F2F5; -fx-padding: 20;"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="br.edu.ifpb.lojavirtual.controller.ProdutoDetalhesController">
+
+    <!-- Informações do Produto -->
+    <HBox spacing="15.0" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);">
+        <ImageView fx:id="produtoImageView" fitHeight="120.0" fitWidth="120.0" preserveRatio="true" />
+        <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+            <Label fx:id="nomeProdutoLabel" wrapText="true">
+                <font><Font name="System Bold" size="20.0" /></font>
+            </Label>
+            <Label fx:id="precoProdutoLabel" textFill="#00a60e">
+                <font><Font name="System Bold" size="18.0" /></font>
+            </Label>
+            <Label fx:id="descricaoProdutoLabel" textFill="#555555" wrapText="true" />
+        </VBox>
+    </HBox>
+
+    <Separator />
+
+    <!-- Lista de Avaliações Existentes -->
+    <Label text="Avaliações dos Clientes" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+
+    <ScrollPane fitToWidth="true" vbarPolicy="AS_NEEDED" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+        <VBox fx:id="avaliacoesVBox" spacing="10.0" style="-fx-background-color: transparent;" />
+    </ScrollPane>
+
+    <Separator />
+
+    <!-- Formulário para Nova Avaliação (Com ID para controle de visibilidade) -->
+    <VBox fx:id="formAvaliacao" spacing="10.0" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #00A60E; -fx-border-radius: 10;">
+        <Label text="Deixe sua Avaliação" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Label text="Nota:" />
+            <ComboBox fx:id="notaComboBox" prefWidth="100.0" promptText="1 a 5" />
+        </HBox>
+
+        <TextArea fx:id="comentarioTextArea" prefHeight="60.0" promptText="Escreva o que você achou do produto..." wrapText="true" />
+
+        <HBox alignment="CENTER_RIGHT">
+            <Button onAction="#handlePublicarAvaliacao" style="-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="Publicar Avaliação" />
+        </HBox>
+    </VBox>
+
+</VBox>

@@ -1,10 +1,10 @@
 package br.edu.ifpb.lojavirtual.controller;
 
 import br.edu.ifpb.lojavirtual.dao.CatalogoDAO;
-import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importe adicionado
+import br.edu.ifpb.lojavirtual.dao.CategoriaDAO;
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
 import br.edu.ifpb.lojavirtual.model.Catalogo;
-import br.edu.ifpb.lojavirtual.model.Categoria; // Importe adicionado
+import br.edu.ifpb.lojavirtual.model.Categoria;
 import br.edu.ifpb.lojavirtual.model.Produto;
 import br.edu.ifpb.lojavirtual.model.Usuario;
 import br.edu.ifpb.lojavirtual.service.AuthService;
@@ -20,6 +20,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,12 +88,10 @@ public class ProdutosController {
     private void criarBotoesDeCategoria() {
         categoryHBox.getChildren().clear();
 
-        // Botão "Todos"
         Button todosButton = criarBotaoEstilizado("Todos", "Todos");
         categoryHBox.getChildren().add(todosButton);
 
         try {
-            // Agora as categorias vêm do banco!
             CategoriaDAO categoriaDAO = new CategoriaDAO();
             List<Categoria> categorias = categoriaDAO.findAll();
 
@@ -118,16 +119,15 @@ public class ProdutosController {
         Button clickedButton = (Button) event.getSource();
         Object userData = clickedButton.getUserData();
 
-        // 1. Atualiza o estado da Categoria Ativa
         if (userData instanceof String && "Todos".equals(userData)) {
-            setCategoriaAtiva(null); // Clicou em "Todos", então não tem categoria específica
+            setCategoriaAtiva(null);
         } else if (userData instanceof Categoria) {
-            setCategoriaAtiva((Categoria) userData); // Salva a categoria clicada
+            setCategoriaAtiva((Categoria) userData);
         }
 
-        // 2. Manda cruzar os dados (Catálogo atual + Categoria clicada)
         aplicarFiltros();
     }
+
     private void loadAllProducts() {
         if (produtoDAO != null) {
             try {
@@ -178,12 +178,44 @@ public class ProdutosController {
         javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
         VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
+        // --- BOTÕES ADICIONADOS AQUI ---
+        Button detalhesButton = new Button("Avaliações");
+        detalhesButton.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #00A60E; -fx-text-fill: #333; -fx-border-radius: 5; -fx-padding: 8px 16px; -fx-cursor: hand;");
+        detalhesButton.setOnAction(event -> abrirModalDetalhes(produto));
+
         Button buyButton = new Button("Comprar");
         buyButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 8px 16px; -fx-cursor: hand;");
         buyButton.setOnAction(event -> handleComprarProduto(produto));
 
-        card.getChildren().addAll(imageView, nameLabel, priceLabel, spacer, buyButton);
+        // Coloca os dois botões lado a lado
+        HBox botoesBox = new HBox(10, detalhesButton, buyButton);
+        botoesBox.setAlignment(javafx.geometry.Pos.CENTER);
+
+        card.getChildren().addAll(imageView, nameLabel, priceLabel, spacer, botoesBox);
         return card;
+    }
+
+    // --- NOVO MÉTODO PARA ABRIR A TELA DE AVALIAÇÕES ---
+    private void abrirModalDetalhes(Produto produto) {
+        Window ownerWindow = productTilePane.getScene().getWindow();
+
+        Object controller = NavigationManager.getInstance().setupModal(
+                "/br/edu/ifpb/lojavirtual/view/ProdutoDetalhesView.fxml",
+                "Detalhes do Produto",
+                ownerWindow
+        );
+
+        if (controller instanceof ProdutoDetalhesController detalhesController) {
+            detalhesController.setStage(detalhesController.getStage());
+            detalhesController.inicializarDados(produto);
+
+            Stage modalStage = detalhesController.getStage();
+            if (modalStage != null) {
+                modalStage.showAndWait();
+            }
+        } else {
+            showAlert(AlertType.ERROR, "Erro", "Não foi possível abrir os detalhes do produto.");
+        }
     }
 
     private void handleComprarProduto(Produto produto) {
@@ -214,12 +246,14 @@ public class ProdutosController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-        alert.initOwner(productTilePane.getScene().getWindow());
+        if (productTilePane.getScene() != null) {
+            alert.initOwner(productTilePane.getScene().getWindow());
+        }
         alert.showAndWait();
     }
+
     @FXML
     void handleLogout(ActionEvent event) {
-        // Opcional: Mostrar uma confirmação
         AuthService.getInstance().logout();
         NavigationManager.getInstance().navigateToLogin();
     }
@@ -228,7 +262,6 @@ public class ProdutosController {
         try {
             List<Catalogo> catalogos = catalogoDAO.listarTodos();
 
-            // Opção para o cliente voltar a ver todos os produtos
             Catalogo todos = new Catalogo();
             todos.setNome("Todos os Produtos");
             catalogos.add(0, todos);
@@ -244,7 +277,6 @@ public class ProdutosController {
         Catalogo selecionado = cbCatalogosCliente.getSelectionModel().getSelectedItem();
         if (selecionado == null) return;
 
-        // Apenas salva a escolha e manda aplicar!
         this.catalogoAtivo = selecionado;
         aplicarFiltros();
     }
@@ -252,16 +284,13 @@ public class ProdutosController {
     @FXML
     public void limparFiltro(ActionEvent event) {
         cbCatalogosCliente.getSelectionModel().clearSelection();
-
-        // Zera TODOS os filtros salvos
         this.catalogoAtivo = null;
         this.categoriaAtiva = null;
-        this.termoBusca = ""; // Zera o texto no estado
+        this.termoBusca = "";
 
         if (searchTextField != null) {
-            searchTextField.clear(); // Apaga o texto visualmente da barra
+            searchTextField.clear();
         }
-
         aplicarFiltros();
     }
 
@@ -269,21 +298,18 @@ public class ProdutosController {
         try {
             List<Produto> produtos;
 
-            // 1. Busca os produtos base (Catálogo ativo ou Todos)
             if (catalogoAtivo != null && !catalogoAtivo.getNome().equals("Todos os Produtos")) {
                 produtos = produtoDAO.listarPorCatalogo(catalogoAtivo.getId());
             } else {
                 produtos = produtoDAO.findAll();
             }
 
-            // 2. Cruza com a Categoria (se houver alguma selecionada)
             if (categoriaAtiva != null) {
                 produtos = produtos.stream()
-                        .filter(p -> p.getCategoria() != null && p.getCategoria().getId() == categoriaAtiva.getId())
+                        .filter(p -> p.getCategoria() != null && p.getCategoria().getId().equals(categoriaAtiva.getId()))
                         .collect(Collectors.toList());
             }
 
-            // 3. Cruza com o Texto de Busca (se houver algo digitado)
             if (termoBusca != null && !termoBusca.trim().isEmpty()) {
                 String termo = termoBusca.toLowerCase();
                 produtos = produtos.stream()
@@ -291,7 +317,6 @@ public class ProdutosController {
                         .collect(Collectors.toList());
             }
 
-            // 4. Atualiza a tela
             displayProducts(produtos);
             atualizarFeedbackVisual();
 
@@ -304,20 +329,17 @@ public class ProdutosController {
         StringBuilder titulo = new StringBuilder();
         boolean temFiltro = false;
 
-        // Monta o texto do Catálogo
         if (catalogoAtivo != null && !catalogoAtivo.getNome().equals("Todos os Produtos")) {
             titulo.append("Catálogo: ").append(catalogoAtivo.getNome());
             temFiltro = true;
         }
 
-        // Monta o texto da Categoria
         if (categoriaAtiva != null) {
-            if (temFiltro) titulo.append("  |  "); // Separador se já tiver catálogo
+            if (temFiltro) titulo.append("  |  ");
             titulo.append("Categoria: ").append(categoriaAtiva.getNome());
             temFiltro = true;
         }
 
-        // Se não tiver nenhum filtro
         if (!temFiltro) {
             titulo.append("Todos os Produtos");
         }
@@ -325,5 +347,4 @@ public class ProdutosController {
         lblTituloSessao.setText(titulo.toString());
         btnLimparFiltro.setVisible(temFiltro);
     }
-
 }

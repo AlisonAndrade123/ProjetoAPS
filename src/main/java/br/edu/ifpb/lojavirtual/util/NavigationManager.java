@@ -78,14 +78,18 @@ public class NavigationManager {
             modalStage.initOwner(ownerWindow);
             modalStage.initModality(Modality.APPLICATION_MODAL);
 
-            // Seu código original:
+            // Verificações e configurações dos diferentes Modais do sistema
             if (controller instanceof CadastrarProdutoController cadastrarController) {
                 cadastrarController.setStage(modalStage);
-                cadastrarController.setProdutoDAO(new br.edu.ifpb.lojavirtual.dao.ProdutoDAO());
+                cadastrarController.setProdutoDAO(new ProdutoDAO());
             }
-            // NOVO: Adicionamos o controller do Catálogo aqui!
+            // Controller do Catálogo
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarCatalogoController catalogoController) {
                 catalogoController.setStage(modalStage);
+            }
+            // NOVO: Controller de Detalhes/Avaliação do Produto
+            else if (controller instanceof br.edu.ifpb.lojavirtual.controller.ProdutoDetalhesController detalhesController) {
+                detalhesController.setStage(modalStage);
             }
 
             return controller;
