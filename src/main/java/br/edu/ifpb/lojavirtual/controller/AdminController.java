@@ -97,7 +97,6 @@ public class AdminController {
             showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Não foi possível carregar a tela de cadastro.");
         }
 
-        // Atualiza a tela mantendo os filtros atuais após fechar o modal
         aplicarFiltrosAdmin();
     }
 
@@ -224,7 +223,6 @@ public class AdminController {
         editButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 6px 12px; -fx-cursor: hand;");
         editButton.setOnAction(e -> handleEditProduct(produto));
 
-        // --- NOVO: Botão de Avaliações para o Admin ---
         Button avaliacoesButton = new Button("Avaliações");
         avaliacoesButton.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #00A60E; -fx-text-fill: #333; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 5px 10px; -fx-cursor: hand;");
         avaliacoesButton.setOnAction(e -> abrirModalAvaliacoes(produto));
@@ -236,7 +234,6 @@ public class AdminController {
         return card;
     }
 
-    // --- NOVO: Método que abre o modal de avaliações para o Admin ---
     private void abrirModalAvaliacoes(Produto produto) {
         Window ownerWindow = productTilePane.getScene().getWindow();
 
@@ -247,7 +244,7 @@ public class AdminController {
         );
 
         if (controller instanceof ProdutoDetalhesController detalhesController) {
-            detalhesController.setStage(detalhesController.getStage()); // Se já foi setado no setupModal
+            detalhesController.setStage(detalhesController.getStage());
             detalhesController.inicializarDados(produto);
 
             Stage modalStage = detalhesController.getStage();
@@ -259,9 +256,6 @@ public class AdminController {
         }
     }
 
-    // =======================================================================
-    // MOTOR DE FILTROS UNIFICADOS
-    // =======================================================================
     private void aplicarFiltrosAdmin() {
         try {
             List<Produto> produtos;
@@ -388,27 +382,46 @@ public class AdminController {
         lblTituloSessao.setText(titulo.toString());
         btnLimparFiltro.setVisible(temFiltro);
     }
+
     @FXML
     public void handleManageCategories(ActionEvent event) {
         Window ownerWindow = productTilePane.getScene().getWindow();
-
-        // 1. Configura o modal e captura o controller retornado
         Object controller = NavigationManager.getInstance().setupModal(
                 "/br/edu/ifpb/lojavirtual/view/GerenciarCategoriasView.fxml",
                 "Gerenciar Categorias",
                 ownerWindow
         );
 
-        // 2. IMPORTANTE: Precisamos mandar a janela aparecer!
         if (controller instanceof GerenciarCategoriasController categoriaController) {
             Stage modalStage = categoriaController.getStage();
             if (modalStage != null) {
-                modalStage.showAndWait(); // Trava a tela principal até fechar o modal
-
-                // 3. Atualiza a interface após fechar o modal (caso tenha mudado nomes)
+                modalStage.showAndWait();
                 criarBotoesDeCategoria();
                 aplicarFiltrosAdmin();
             }
+        }
+    }
+
+    @FXML
+    public void handleManageOrders(ActionEvent event) {
+        System.out.println("Clique detectado no botão Gerenciar Pedidos...");
+        Window ownerWindow = productTilePane.getScene().getWindow();
+
+        // Verifique se este caminho /view/GerenciarPedidosView.fxml existe exatamente assim
+        Object controller = NavigationManager.getInstance().setupModal(
+                "/br/edu/ifpb/lojavirtual/view/GerenciarPedidosView.fxml",
+                "Gestão de Pedidos",
+                ownerWindow
+        );
+
+        if (controller instanceof GerenciarPedidosController ordersController) {
+            System.out.println("Abrindo modal de pedidos...");
+            Stage modalStage = ordersController.getStage();
+            if (modalStage != null) {
+                modalStage.showAndWait(); // ESTE COMANDO É O QUE ABRE A TELA
+            }
+        } else {
+            System.err.println("O Controller retornado não é do tipo GerenciarPedidosController!");
         }
     }
 }
