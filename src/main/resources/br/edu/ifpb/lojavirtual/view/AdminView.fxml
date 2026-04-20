@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane style="-fx-background-color: #00A60E;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.edu.ifpb.lojavirtual.controller.AdminController">
+<BorderPane style="-fx-background-color: #00A60E;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.edu.ifpb.lojavirtual.controller.AdminController">
     <top>
         <HBox alignment="CENTER_LEFT" spacing="12.0">
             <padding>
@@ -43,12 +43,12 @@
                 </Button>
 
                 <!-- Botão Gerenciar Catálogos -->
-                <Button fx:id="manageCatalogsButton" mnemonicParsing="false" onAction="#handleManageCatalogs" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Catálogos" textFill="#00A60E">
+                <Button fx:id="manageCatalogsButton" mnemonicParsing="false" onAction="#handleManageCatalogs" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Gerenciar Catálogos" textFill="#00A60E">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Button>
 
                 <!-- Botão Gerenciar Categorias -->
-                <Button fx:id="manageCategoriesButton" mnemonicParsing="false" onAction="#handleManageCategories" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Categorias" textFill="#00A60E">
+                <Button fx:id="manageCategoriesButton" mnemonicParsing="false" onAction="#handleManageCategories" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Gerenciar Categorias" textFill="#00A60E">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Button>
 
