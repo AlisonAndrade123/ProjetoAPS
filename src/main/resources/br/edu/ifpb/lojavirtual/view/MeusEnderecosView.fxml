@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #FFFFFF;" prefWidth="500" prefHeight="400"
+      xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="br.edu.ifpb.lojavirtual.controller.MeusEnderecosController">
+
+    <Label text="Meus Endereços" textFill="#00A60E">
+        <font>
+            <Font name="System Bold" size="22.0"/>
+        </font>
+    </Label>
+
+    <ListView fx:id="enderecoListView" VBox.vgrow="ALWAYS" style="-fx-border-color: #CCCCCC; -fx-border-radius: 5;"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="+ Adicionar Novo" onAction="#handleAdicionar"
+                style="-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;"/>
+
+        <Button text="Remover Selecionado" onAction="#handleRemover"
+                style="-fx-background-color: #DC3545; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;"/>
+
+        <Pane HBox.hgrow="ALWAYS" />
+
+        <Button text="Fechar" onAction="#handleFechar"
+                style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;"/>
+    </HBox>
+</VBox>

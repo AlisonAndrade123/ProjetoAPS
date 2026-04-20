@@ -11,11 +11,9 @@ public class NotaFiscal {
     private double valorTotal;
     private Endereco enderecoEntrega;
 
-    // Construtor vazio (Necessário para o Service)
     public NotaFiscal() {
     }
 
-    // Construtor completo (opcional, mas bom ter)
     public NotaFiscal(String numero, LocalDateTime dataEmissao, String clienteNome, List<Produto> produtos, double valorTotal, Endereco enderecoEntrega) {
         this.numero = numero;
         this.dataEmissao = dataEmissao;
@@ -25,7 +23,6 @@ public class NotaFiscal {
         this.enderecoEntrega = enderecoEntrega;
     }
 
-    // Getters e Setters (Essenciais para resolver os erros de "cannot find symbol")
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
 

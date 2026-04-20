@@ -9,7 +9,6 @@ import java.util.List;
 
 public class AvaliacaoDAO {
 
-    // Equivale ao método "publicar()" do diagrama
     public void salvar(Avaliacao avaliacao) throws SQLException {
         String sql = "INSERT INTO avaliacoes (comentario, nota, data_avaliacao, id_usuario, id_produto) VALUES (?, ?, ?, ?, ?)";
 
@@ -31,11 +30,8 @@ public class AvaliacaoDAO {
             }
         }
     }
-
-    // Equivale ao método "listarPorProduto()" do diagrama
     public List<Avaliacao> buscarPorProduto(int idProduto) throws SQLException {
         List<Avaliacao> avaliacoes = new ArrayList<>();
-        // Fazemos um JOIN com a tabela usuários para pegar o nome de quem avaliou
         String sql = "SELECT a.*, u.nome AS nome_usuario FROM avaliacoes a " +
                 "JOIN usuarios u ON a.id_usuario = u.id " +
                 "WHERE a.id_produto = ? ORDER BY a.id DESC";
@@ -54,8 +50,6 @@ public class AvaliacaoDAO {
                 av.setDataAvaliacao(rs.getString("data_avaliacao"));
                 av.setIdUsuario(rs.getInt("id_usuario"));
                 av.setIdProduto(rs.getInt("id_produto"));
-
-                // Pega o nome do usuário vindo do JOIN
                 av.setNomeUsuario(rs.getString("nome_usuario"));
 
                 avaliacoes.add(av);
@@ -64,7 +58,6 @@ public class AvaliacaoDAO {
         return avaliacoes;
     }
 
-    // Equivale ao método "remover()" do diagrama
     public boolean deletar(int idAvaliacao) throws SQLException {
         String sql = "DELETE FROM avaliacoes WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();

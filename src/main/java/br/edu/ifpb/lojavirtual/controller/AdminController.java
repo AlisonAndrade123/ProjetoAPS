@@ -52,8 +52,6 @@ public class AdminController {
             NavigationManager.getInstance().navigateToLogin();
             return;
         }
-
-        // Listener da Busca por Texto Unificado
         searchTextField.textProperty().addListener((obs, oldText, newText) -> {
             this.termoBusca = newText;
             aplicarFiltrosAdmin();
@@ -61,8 +59,6 @@ public class AdminController {
 
         criarBotoesDeCategoria();
         carregarCatalogosNoMenu();
-
-        // Carrega a tela inicialmente
         aplicarFiltrosAdmin();
     }
 
@@ -406,8 +402,6 @@ public class AdminController {
     public void handleManageOrders(ActionEvent event) {
         System.out.println("Clique detectado no botão Gerenciar Pedidos...");
         Window ownerWindow = productTilePane.getScene().getWindow();
-
-        // Verifique se este caminho /view/GerenciarPedidosView.fxml existe exatamente assim
         Object controller = NavigationManager.getInstance().setupModal(
                 "/br/edu/ifpb/lojavirtual/view/GerenciarPedidosView.fxml",
                 "Gestão de Pedidos",
@@ -418,7 +412,7 @@ public class AdminController {
             System.out.println("Abrindo modal de pedidos...");
             Stage modalStage = ordersController.getStage();
             if (modalStage != null) {
-                modalStage.showAndWait(); // ESTE COMANDO É O QUE ABRE A TELA
+                modalStage.showAndWait();
             }
         } else {
             System.err.println("O Controller retornado não é do tipo GerenciarPedidosController!");

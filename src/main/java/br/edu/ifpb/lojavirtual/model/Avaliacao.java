@@ -3,12 +3,11 @@ package br.edu.ifpb.lojavirtual.model;
 public class Avaliacao {
     private Integer id;
     private String comentario;
-    private Integer nota; // Ex: 1 a 5 estrelas
+    private Integer nota;
     private String dataAvaliacao;
     private Integer idUsuario;
     private Integer idProduto;
 
-    // Atributo auxiliar para a Interface Gráfica
     private String nomeUsuario;
 
     public Avaliacao() {}

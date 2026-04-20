@@ -8,9 +8,6 @@ import java.util.List;
 
 public class CategoriaDAO {
 
-    /**
-     * Salva uma nova categoria no banco de dados.
-     */
     public void salvar(Categoria categoria) throws SQLException {
         String sql = "INSERT INTO categorias (nome) VALUES (?)";
         try (Connection conn = DatabaseManager.getConnection();
@@ -27,9 +24,6 @@ public class CategoriaDAO {
         }
     }
 
-    /**
-     * Atualiza o nome de uma categoria existente.
-     */
     public void atualizar(Categoria categoria) throws SQLException {
         String sql = "UPDATE categorias SET nome = ? WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
@@ -42,11 +36,6 @@ public class CategoriaDAO {
         }
     }
 
-    /**
-     * Exclui uma categoria pelo ID.
-     * Nota: Se houver produtos vinculados a esta categoria, o SQLite lançará
-     * uma exceção de violação de chave estrangeira (Foreign Key Constraint).
-     */
     public boolean excluir(int id) throws SQLException {
         String sql = "DELETE FROM categorias WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
@@ -57,9 +46,6 @@ public class CategoriaDAO {
         }
     }
 
-    /**
-     * Lista todas as categorias cadastradas em ordem alfabética.
-     */
     public List<Categoria> findAll() throws SQLException {
         List<Categoria> categorias = new ArrayList<>();
         String sql = "SELECT id, nome FROM categorias ORDER BY nome ASC";

@@ -9,7 +9,6 @@ import java.util.List;
 
 public class CatalogoDAO {
 
-    // Salva o catálogo e já atualiza o objeto com o ID gerado pelo banco
     public void salvar(Catalogo catalogo) throws SQLException {
         String sql = "INSERT INTO catalogos (nome) VALUES (?)";
 
@@ -18,8 +17,6 @@ public class CatalogoDAO {
 
             stmt.setString(1, catalogo.getNome());
             stmt.executeUpdate();
-
-            // Pega o ID que o SQLite gerou automaticamente e joga no objeto
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
                     catalogo.setId(rs.getInt(1));
@@ -28,7 +25,6 @@ public class CatalogoDAO {
         }
     }
 
-    // Retorna todos os catálogos para preencher menus e listas
     public List<Catalogo> listarTodos() throws SQLException {
         List<Catalogo> catalogos = new ArrayList<>();
         String sql = "SELECT * FROM catalogos";
@@ -45,9 +41,6 @@ public class CatalogoDAO {
         return catalogos;
     }
 
-    // --- Métodos da Tabela Intermediária (N:N) ---
-
-    // Adiciona o produto na tabela de relacionamento
     public void vincularProduto(int idCatalogo, int idProduto) throws SQLException {
         String sql = "INSERT OR IGNORE INTO catalogo_produtos (id_catalogo, id_produto) VALUES (?, ?)";
 
@@ -60,7 +53,6 @@ public class CatalogoDAO {
         }
     }
 
-    // Remove o produto da tabela de relacionamento
     public void desvincularProduto(int idCatalogo, int idProduto) throws SQLException {
         String sql = "DELETE FROM catalogo_produtos WHERE id_catalogo = ? AND id_produto = ?";
 

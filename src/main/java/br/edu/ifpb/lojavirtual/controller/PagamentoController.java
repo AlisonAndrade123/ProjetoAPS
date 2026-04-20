@@ -75,14 +75,12 @@ public class PagamentoController {
             return;
         }
 
-        // Criar o Pedido
         Pedido novoPedido = new Pedido();
         novoPedido.setUsuarioId(usuarioLogado.getId());
         novoPedido.setValorTotal(this.valorTotalCompra);
         novoPedido.setDataPedido(java.time.LocalDateTime.now().toString());
         novoPedido.setEndereco(endereco);
 
-        // --- DEFINIÇÃO DO STATUS INICIAL ---
         novoPedido.setStatus(StatusPedido.PAGO);
 
         List<PedidoItem> itensDoPedido = new ArrayList<>();
@@ -95,20 +93,16 @@ public class PagamentoController {
         });
         novoPedido.setItens(itensDoPedido);
 
-        // --- BACKGROUND THREAD: Processamento sem travar a UI ---
         new Thread(() -> {
             try {
-                // 1. Persistência e Baixa de Estoque
                 PedidoService pedidoService = new PedidoService();
                 pedidoService.finalizarPedido(novoPedido);
 
-                // 2. Lógica do Método de Pagamento (Strategy)
                 if (toggleGroup.getSelectedToggle() != null) {
                     MetodoPagamento metodo = (MetodoPagamento) toggleGroup.getSelectedToggle().getUserData();
                     metodo.processar(novoPedido);
                 }
 
-                // 3. Sucesso na Thread Principal
                 Platform.runLater(() -> {
                     showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Compra finalizada com sucesso!");
                     carrinhoManager.limparCarrinho();

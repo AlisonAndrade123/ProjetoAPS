@@ -1,6 +1,6 @@
 package br.edu.ifpb.lojavirtual.controller;
 
-import br.edu.ifpb.lojavirtual.dao.CategoriaDAO; // Importamos o novo DAO
+import br.edu.ifpb.lojavirtual.dao.CategoriaDAO;
 import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
 import br.edu.ifpb.lojavirtual.model.Categoria;
 import br.edu.ifpb.lojavirtual.model.Produto;
@@ -21,8 +21,6 @@ import java.sql.SQLException;
 public class CadastrarProdutoController {
 
     @FXML private TextField nomeTextField;
-
-    // Adicionado o @FXML que estava faltando para o JavaFX reconhecer
     @FXML private ComboBox<Categoria> categoriaComboBox;
 
     @FXML private TextField imagemTextField;
@@ -49,9 +47,6 @@ public class CadastrarProdutoController {
         this.produtoDAO = produtoDAO;
     }
 
-    // Removi o método antigo "setCategorias" que recebia List<String>.
-    // Agora o próprio controller busca as categorias do banco no initialize().
-
     public void carregarDadosParaEdicao(Produto produto) {
         this.tituloModal.setText("Editar produto");
         this.produtoParaEditar = produto;
@@ -60,7 +55,6 @@ public class CadastrarProdutoController {
         quantidadeTextField.setText(String.valueOf(produto.getQuantidade()));
         precoTextField.setText(String.format("%.2f", produto.getPreco()).replace('.', ','));
 
-        // Seleciona a categoria correta no ComboBox comparando pelo ID
         if (produto.getCategoria() != null) {
             for (Categoria cat : categoriaComboBox.getItems()) {
                 if (cat.getId().equals(produto.getCategoria().getId())) {
@@ -73,14 +67,12 @@ public class CadastrarProdutoController {
         if (produto.getNomeArquivoImagem() != null) {
             imagemTextField.setText(produto.getNomeArquivoImagem());
         }
-        finalizarCadastroButton.setText("Salvar Alterações"); // Encoding corrigido
+        finalizarCadastroButton.setText("Salvar Alterações");
     }
 
     @FXML
     public void initialize() {
         imagemTextField.setEditable(false);
-
-        // Carrega as categorias do banco de dados e coloca no ComboBox
         try {
             CategoriaDAO categoriaDAO = new CategoriaDAO();
             categoriaComboBox.getItems().setAll(categoriaDAO.findAll());
@@ -124,7 +116,7 @@ public class CadastrarProdutoController {
                 showAlertAndClose("Sucesso", "Produto atualizado com sucesso!");
             }
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Erro de Formato", "Preço e Quantidade devem ser números válidos."); // Encoding corrigido
+            showAlert(Alert.AlertType.ERROR, "Erro de Formato", "Preço e Quantidade devem ser números válidos.");
         } catch (SQLException | IOException e) {
             showAlert(Alert.AlertType.ERROR, "Erro", "Ocorreu um erro ao salvar: " + e.getMessage());
             e.printStackTrace();
@@ -140,7 +132,7 @@ public class CadastrarProdutoController {
 
     private void preencherDadosDoFormulario(Produto produto) {
         produto.setNome(nomeTextField.getText());
-        produto.setCategoria(categoriaComboBox.getValue()); // Agora salva o objeto Categoria certinho!
+        produto.setCategoria(categoriaComboBox.getValue());
         produto.setDescricao(descricaoTextField.getText());
         produto.setQuantidade(Integer.parseInt(quantidadeTextField.getText()));
         produto.setPreco(Double.parseDouble(precoTextField.getText().replace(',', '.')));
@@ -151,10 +143,10 @@ public class CadastrarProdutoController {
         if (nomeTextField.getText().trim().isEmpty()) errorMessage += "Nome é obrigatório.\n";
         if (categoriaComboBox.getValue() == null) errorMessage += "Categoria é obrigatória.\n";
         if (quantidadeTextField.getText().trim().isEmpty()) errorMessage += "Quantidade é obrigatória.\n";
-        if (precoTextField.getText().trim().isEmpty()) errorMessage += "Preço é obrigatório.\n"; // Encoding corrigido
+        if (precoTextField.getText().trim().isEmpty()) errorMessage += "Preço é obrigatório.\n";
 
         if (!errorMessage.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Campos Inválidos", errorMessage); // Encoding corrigido
+            showAlert(Alert.AlertType.ERROR, "Campos Inválidos", errorMessage);
             return false;
         }
         return true;

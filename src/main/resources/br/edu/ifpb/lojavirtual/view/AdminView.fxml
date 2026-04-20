@@ -22,7 +22,6 @@
                 <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
             </padding>
             <children>
-                <!-- Barra de Pesquisa -->
                 <AnchorPane style="-fx-background-color: #FFFFFF; -fx-border-radius: 15; -fx-background-radius: 15;" HBox.hgrow="ALWAYS">
                     <children>
                         <TextField fx:id="searchTextField" promptText="O que você quer pesquisar?" style="-fx-background-color: transparent; -fx-border-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="45.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
@@ -34,30 +33,24 @@
                     </children>
                 </AnchorPane>
 
-                <!-- Filtro de Catálogos -->
                 <ComboBox fx:id="cbCatalogosAdmin" onAction="#filtrarPorCatalogo" prefHeight="45.0" prefWidth="170.0" promptText="Filtrar por Catálogo" style="-fx-background-color: white; -fx-border-color: #00A60E; -fx-border-width: 2; -fx-border-radius: 20; -fx-background-radius: 20; -fx-background-insets: 1; -fx-font-size: 13px; -fx-cursor: hand;" />
 
-                <!-- Botão Adicionar Produto -->
                 <Button fx:id="addProductButton" mnemonicParsing="false" onAction="#handleAddProduct" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Novo Produto" textFill="#00A60E">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Button>
 
-                <!-- Botão Gerenciar Catálogos -->
                 <Button fx:id="manageCatalogsButton" mnemonicParsing="false" onAction="#handleManageCatalogs" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Gerenciar Catálogos" textFill="#00A60E">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Button>
 
-                <!-- Botão Gerenciar Categorias -->
                 <Button fx:id="manageCategoriesButton" mnemonicParsing="false" onAction="#handleManageCategories" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Gerenciar Categorias" textFill="#00A60E">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Button>
 
-                <!-- NOVO: Botão Gerenciar Pedidos -->
                 <Button fx:id="manageOrdersButton" mnemonicParsing="false" onAction="#handleManageOrders" prefHeight="45.0" prefWidth="160.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-cursor: hand;" text="Gerenciar Pedidos" textFill="#00A60E">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Button>
 
-                <!-- Botão Sair -->
                 <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" prefHeight="45.0" prefWidth="80.0" style="-fx-background-color: #F43C3C; -fx-background-radius: 10; -fx-cursor: hand;" text="Sair" textFill="WHITE">
                     <font><Font name="System Bold" size="15.0" /></font>
                 </Button>
@@ -67,14 +60,12 @@
     <center>
         <VBox style="-fx-background-color: #F4F4F4;">
             <children>
-                <!-- Barra de Categorias -->
                 <ScrollPane fx:id="categoryScrollPane" hbarPolicy="AS_NEEDED" minHeight="-Infinity" prefHeight="72.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #00A60E; -fx-border-width: 0 0 2 0;" vbarPolicy="NEVER">
                     <content>
                         <HBox fx:id="categoryHBox" alignment="CENTER_LEFT" spacing="15.0" style="-fx-padding: 0 15 0 15;" />
                     </content>
                 </ScrollPane>
 
-                <!-- Barra de Feedback de Sessão/Filtro -->
                 <HBox alignment="CENTER_LEFT" spacing="20.0" style="-fx-background-color: #00A60E; -fx-padding: 10 20 10 20;">
                     <children>
                         <Label fx:id="lblTituloSessao" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;" text="Gerenciando Todos os Produtos" />
@@ -82,7 +73,6 @@
                     </children>
                 </HBox>
 
-                <!-- Grade de Produtos -->
                 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-padding: 0;" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS">
                     <content>
                         <TilePane fx:id="productTilePane" alignment="CENTER" hgap="20.0" prefTileHeight="400.0" prefTileWidth="345.0" style="-fx-padding: 20;" vgap="20.0" />

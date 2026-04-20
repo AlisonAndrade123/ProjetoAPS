@@ -20,7 +20,6 @@ public class ProdutoDAO {
             pstmt.setDouble(3, produto.getPreco());
             pstmt.setInt(4, produto.getQuantidade());
 
-            // Pega o ID do objeto Categoria que está dentro do Produto
             pstmt.setInt(5, produto.getCategoria().getId());
 
             pstmt.setString(6, produto.getNomeArquivoImagem());
@@ -39,7 +38,6 @@ public class ProdutoDAO {
 
     public List<Produto> findAll() throws SQLException {
         List<Produto> produtos = new ArrayList<>();
-        // Fazemos um JOIN com a tabela categorias para pegar o nome dela também
         String sql = "SELECT p.id, p.nome, p.descricao, p.preco, p.quantidade, p.id_categoria, c.nome AS categoria_nome, p.nome_arquivo_imagem " +
                 "FROM produtos p JOIN categorias c ON p.id_categoria = c.id";
 
@@ -53,7 +51,6 @@ public class ProdutoDAO {
         return produtos;
     }
 
-    // Alterado para buscar por ID da Categoria (mais seguro e rápido)
     public List<Produto> findByCategoryId(int idCategoria) throws SQLException {
         List<Produto> produtos = new ArrayList<>();
         String sql = "SELECT p.id, p.nome, p.descricao, p.preco, p.quantidade, p.id_categoria, c.nome AS categoria_nome, p.nome_arquivo_imagem " +
@@ -132,7 +129,6 @@ public class ProdutoDAO {
         return null;
     }
 
-    // NOVO MÉTODO: Será usado na hora de aprovar o pagamento!
     public boolean atualizarEstoque(int idProduto, int novaQuantidade) throws SQLException {
         String sql = "UPDATE produtos SET quantidade = ? WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
@@ -143,7 +139,6 @@ public class ProdutoDAO {
         }
     }
 
-    // Método auxiliar para evitar repetição de código
     private Produto extrairProdutoDoResultSet(ResultSet rs) throws SQLException {
         Produto produto = new Produto();
         produto.setId(rs.getInt("id"));
@@ -153,7 +148,6 @@ public class ProdutoDAO {
         produto.setQuantidade(rs.getInt("quantidade"));
         produto.setNomeArquivoImagem(rs.getString("nome_arquivo_imagem"));
 
-        // Montando o objeto Categoria com os dados do JOIN
         Categoria categoria = new Categoria();
         categoria.setId(rs.getInt("id_categoria"));
         categoria.setNome(rs.getString("categoria_nome"));
@@ -193,7 +187,7 @@ public class ProdutoDAO {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                return rs.getInt(1); // Retorna a quantidade de produtos encontrados
+                return rs.getInt(1);
             }
         }
         return 0;

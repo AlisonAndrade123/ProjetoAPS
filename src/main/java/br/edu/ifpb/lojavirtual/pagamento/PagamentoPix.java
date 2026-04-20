@@ -75,7 +75,6 @@ public class PagamentoPix implements MetodoPagamento {
 
     @Override
     public void processar(Pedido pedido) throws Exception {
-        // No PIX simulado, apenas registramos que o pagamento foi "solicitado"
         System.out.println("Pagamento PIX registrado para o pedido: " + pedido.getId());
     }
 }

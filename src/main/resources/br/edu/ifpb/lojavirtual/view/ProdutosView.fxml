@@ -31,12 +31,12 @@
             <right>
                 <HBox alignment="CENTER_RIGHT" spacing="10.0" BorderPane.alignment="CENTER">
                     <children>
+                        <Button fx:id="btnMeusEnderecos" mnemonicParsing="false" onAction="#handleMeusEnderecos" prefHeight="40.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 8; -fx-cursor: hand; -fx-text-fill: #00A60E; -fx-font-weight: bold; -fx-padding: 0 15;" text="Meus Endereços" />
+
                         <Button fx:id="historyButton" mnemonicParsing="false" onAction="#handleHistoryButtonAction" style="-fx-background-color: transparent; -fx-cursor: hand;">
                             <graphic>
                                 <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../imagens/historico.png" />
-                                    </image>
+                                    <image><Image url="@../imagens/historico.png" /></image>
                                 </ImageView>
                             </graphic>
                         </Button>
@@ -106,7 +106,7 @@
                                 <Font name="System Bold" size="20.0" />
                             </font>
                         </Label>
-                        <Button fx:id="btnLimparFiltro" mnemonicParsing="false" onAction="#limparFiltro" style="-fx-background-color: #FF3B30; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 15; -fx-padding: 5 15;" text="Limpar Filtro ✖" visible="false" />
+                        <Button fx:id="btnLimparFiltro" mnemonicParsing="false" onAction="#limparFiltro" style="-fx-background-color: #FF3B30; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 15; -fx-padding: 5 15;" text="Limpar Filtro ?" visible="false" />
                     </children>
                 </HBox>
 

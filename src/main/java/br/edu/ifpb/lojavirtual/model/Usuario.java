@@ -5,12 +5,12 @@ public class Usuario {
     private String nome;
     private String email;
     private String senha;
-    private PerfilUsuario perfil; // Atributo atualizado (usando o Enum)
+    private PerfilUsuario perfil;
+    private Endereco endereco;
 
     public Usuario() {
     }
 
-    // Construtor sem ID (para novos cadastros)
     public Usuario(String nome, String email, String senha, PerfilUsuario perfil) {
         this.nome = nome;
         this.email = email;
@@ -18,7 +18,6 @@ public class Usuario {
         this.perfil = perfil;
     }
 
-    // Construtor com ID (para buscar do banco de dados)
     public Usuario(int id, String nome, String email, String senha, PerfilUsuario perfil) {
         this.id = id;
         this.nome = nome;
@@ -27,58 +26,26 @@ public class Usuario {
         this.perfil = perfil;
     }
 
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getSenha() { return senha; }
+    public void setSenha(String senha) { this.senha = senha; }
+    public PerfilUsuario getPerfil() { return perfil; }
+    public void setPerfil(PerfilUsuario perfil) { this.perfil = perfil; }
 
-    public String getNome() {
-        return nome;
-    }
+    public Endereco getEndereco() { return endereco; }
+    public void setEndereco(Endereco endereco) { this.endereco = endereco; }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getSenha() {
-        return senha;
-    }
-
-    public PerfilUsuario getPerfil() {
-        return perfil;
-    }
-
-    // Método mantido para não quebrar suas validações de Login
     public boolean isAdmin() {
         return this.perfil != null && this.perfil == PerfilUsuario.ADMIN;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-
-    public void setPerfil(PerfilUsuario perfil) {
-        this.perfil = perfil;
-    }
-
     @Override
     public String toString() {
-        return "Usuario{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", email='" + email + '\'' +
-                ", perfil=" + perfil + // Atualizado no toString
-                '}';
+        return "Usuario{" + "id=" + id + ", nome='" + nome + '\'' + ", email='" + email + '\'' + ", perfil=" + perfil + '}';
     }
 }

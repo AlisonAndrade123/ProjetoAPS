@@ -1,5 +1,6 @@
 package br.edu.ifpb.lojavirtual.dao;
 
+import br.edu.ifpb.lojavirtual.model.Endereco;
 import br.edu.ifpb.lojavirtual.model.PerfilUsuario;
 import br.edu.ifpb.lojavirtual.model.Usuario;
 import br.edu.ifpb.lojavirtual.util.AppException;
@@ -22,7 +23,19 @@ public class UsuarioDAO {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                return extrairUsuarioDoResultSet(rs);
+                Usuario usuario = extrairUsuarioDoResultSet(rs);
+
+                EnderecoDAO enderecoDAO = new EnderecoDAO();
+                try {
+                    java.util.List<Endereco> enderecos = enderecoDAO.buscarPorUsuario(usuario.getId());
+                    if (!enderecos.isEmpty()) {
+                        usuario.setEndereco(enderecos.get(0));
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                return usuario;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -48,10 +61,6 @@ public class UsuarioDAO {
         return Optional.empty();
     }
 
-    /**
-     * NOVO MÉTODO: Busca o usuário pelo ID.
-     * Necessário para gerar a Nota Fiscal com os dados do cliente.
-     */
     public Usuario findById(int id) throws SQLException {
         String sql = "SELECT id, nome, email, senha, is_admin FROM usuarios WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
@@ -101,9 +110,6 @@ public class UsuarioDAO {
         return usuario;
     }
 
-    /**
-     * Método auxiliar privado para evitar repetição de código ao ler dados do banco.
-     */
     private Usuario extrairUsuarioDoResultSet(ResultSet rs) throws SQLException {
         Usuario usuario = new Usuario();
         usuario.setId(rs.getInt("id"));
