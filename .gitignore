@@ -45,3 +45,8 @@ bin/
 
 ### Banco de dados ###
 loja_virtual.db
+
+### Arquivos Gerados pelo Sistema (PDFs e Imagens Locais) ###
+boletos/
+notas_fiscais/
+imagens_produtos/
