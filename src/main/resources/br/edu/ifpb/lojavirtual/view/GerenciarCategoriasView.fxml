@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox prefHeight="450.0" prefWidth="550.0" spacing="15.0" style="-fx-background-color: white; -fx-padding: 20;"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="br.edu.ifpb.lojavirtual.controller.GerenciarCategoriasController">
+
+    <Label text="Gerenciar Categorias" textFill="#00a60e">
+        <font><Font name="System Bold" size="20.0" /></font>
+    </Label>
+
+    <HBox spacing="10.0">
+        <children>
+            <TextField fx:id="nomeCategoriaField" promptText="Nome da categoria" HBox.hgrow="ALWAYS" style="-fx-padding: 8;" />
+            <Button fx:id="btnSalvar" onAction="#handleSalvar" prefWidth="120.0"
+                    style="-fx-background-color: #00A60E; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 8;" text="Adicionar" />
+        </children>
+    </HBox>
+
+    <TableView fx:id="tabelaCategorias" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
+            <TableColumn fx:id="colNome" prefWidth="280.0" text="Nome" />
+            <TableColumn fx:id="colAcoes" prefWidth="160.0" text="Ações" />
+        </columns>
+    </TableView>
+
+    <Button onAction="#handleFechar" maxWidth="Infinity" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-cursor: hand;" text="Fechar" />
+</VBox>

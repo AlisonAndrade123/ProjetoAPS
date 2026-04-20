@@ -388,4 +388,27 @@ public class AdminController {
         lblTituloSessao.setText(titulo.toString());
         btnLimparFiltro.setVisible(temFiltro);
     }
+    @FXML
+    public void handleManageCategories(ActionEvent event) {
+        Window ownerWindow = productTilePane.getScene().getWindow();
+
+        // 1. Configura o modal e captura o controller retornado
+        Object controller = NavigationManager.getInstance().setupModal(
+                "/br/edu/ifpb/lojavirtual/view/GerenciarCategoriasView.fxml",
+                "Gerenciar Categorias",
+                ownerWindow
+        );
+
+        // 2. IMPORTANTE: Precisamos mandar a janela aparecer!
+        if (controller instanceof GerenciarCategoriasController categoriaController) {
+            Stage modalStage = categoriaController.getStage();
+            if (modalStage != null) {
+                modalStage.showAndWait(); // Trava a tela principal até fechar o modal
+
+                // 3. Atualiza a interface após fechar o modal (caso tenha mudado nomes)
+                criarBotoesDeCategoria();
+                aplicarFiltrosAdmin();
+            }
+        }
+    }
 }

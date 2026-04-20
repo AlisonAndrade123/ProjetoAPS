@@ -184,4 +184,18 @@ public class ProdutoDAO {
         }
         return produtos;
     }
+    public int contarProdutosPorCategoria(int idCategoria) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM produtos WHERE id_categoria = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, idCategoria);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1); // Retorna a quantidade de produtos encontrados
+            }
+        }
+        return 0;
+    }
 }
