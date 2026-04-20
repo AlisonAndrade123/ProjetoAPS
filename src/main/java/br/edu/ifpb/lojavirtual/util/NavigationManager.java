@@ -87,9 +87,13 @@ public class NavigationManager {
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarCatalogoController catalogoController) {
                 catalogoController.setStage(modalStage);
             }
-            // NOVO: Controller de Detalhes/Avaliação do Produto
+            // Controller de Detalhes/Avaliação do Produto
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.ProdutoDetalhesController detalhesController) {
                 detalhesController.setStage(modalStage);
+            }
+            // NOVO: Controller de Gerenciamento de Categorias
+            else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarCategoriasController categoriaController) {
+                categoriaController.setStage(modalStage);
             }
 
             return controller;
