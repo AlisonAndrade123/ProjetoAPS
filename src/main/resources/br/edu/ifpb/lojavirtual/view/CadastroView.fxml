@@ -14,7 +14,7 @@
   A raiz agora é um ScrollPane para garantir que o formulário nunca seja cortado verticalmente.
 -->
 
-<ScrollPane fitToWidth="true" hbarPolicy="NEVER" xmlns="http://javafx.com/javafx/24.0.1"
+<ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" xmlns="http://javafx.com/javafx/24.0.1"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.edu.ifpb.lojavirtual.controller.CadastroController">
     <content>
         <!--
