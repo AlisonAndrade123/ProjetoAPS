@@ -18,7 +18,6 @@ public class ProdutoService {
         return produtoDAO.findAll();
     }
 
-    // Alterado para receber o ID da categoria
     public List<Produto> getProdutosPorCategoria(int idCategoria) throws SQLException {
         return produtoDAO.findByCategoryId(idCategoria);
     }

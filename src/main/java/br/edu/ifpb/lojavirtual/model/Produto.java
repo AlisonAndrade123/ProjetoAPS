@@ -20,8 +20,6 @@ public class Produto {
     private double preco;
     private int quantidade;
 
-    // --- ALTERAÇÃO AQUI ---
-    // Substituímos String por Categoria para relacionar os objetos
     private Categoria categoria;
 
     private String nomeArquivoImagem;
@@ -70,7 +68,6 @@ public class Produto {
         this.quantidade = quantidade;
     }
 
-    // --- GETTER E SETTER ATUALIZADOS ---
     public Categoria getCategoria() {
         return categoria;
     }
@@ -118,11 +115,9 @@ public class Produto {
         }
     }
 
-    // Adicione isso no seu ProdutoDAO.java
     public List<Produto> listarPorCatalogo(int idCatalogo) throws SQLException {
         List<Produto> produtos = new ArrayList<>();
 
-        // A mágica acontece aqui: juntamos as tabelas 'produtos' e 'catalogo_produtos'
         String sql = "SELECT p.* FROM produtos p " +
                 "INNER JOIN catalogo_produtos cp ON p.id = cp.id_produto " +
                 "WHERE cp.id_catalogo = ?";
@@ -134,14 +129,11 @@ public class Produto {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    // Crie o objeto Produto.
-                    // ATENÇÃO: Adapte este bloco de acordo com os atributos que você já tem
-                    // no seu Produto e como o seu banco retorna (ex: getDouble ou getBigDecimal para preço).
                     Produto p = new Produto();
                     p.setId(rs.getInt("id"));
                     p.setNome(rs.getString("nome"));
                     p.setDescricao(rs.getString("descricao"));
-                    p.setPreco(rs.getDouble("preco")); // Baseado no seu diagrama de classes
+                    p.setPreco(rs.getDouble("preco"));
                     p.setQuantidade(rs.getInt("quantidade"));
 
                     produtos.add(p);

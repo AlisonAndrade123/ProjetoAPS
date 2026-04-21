@@ -2,7 +2,7 @@ package br.edu.ifpb.lojavirtual.model;
 
 public class Endereco {
 
-    private Integer id; // Novo atributo (Diagrama)
+    private Integer id;
     private String rua;
     private String numero;
     private String complemento;
@@ -10,13 +10,11 @@ public class Endereco {
     private String cidade;
     private String estado;
     private String cep;
-    private Integer idUsuario; // Novo atributo para ligar com a tabela de usuários
+    private Integer idUsuario;
 
-    // Construtor vazio (Muito importante para o EnderecoDAO)
     public Endereco() {
     }
 
-    // Construtor original (mantido para facilitar criação de novos endereços no código)
     public Endereco(String rua, String numero, String complemento, String bairro, String cidade, String estado, String cep) {
         this.rua = rua;
         this.numero = numero;
@@ -27,7 +25,6 @@ public class Endereco {
         this.cep = cep;
     }
 
-    // Construtor completo (com IDs)
     public Endereco(Integer id, String rua, String numero, String complemento, String bairro, String cidade, String estado, String cep, Integer idUsuario) {
         this.id = id;
         this.rua = rua;
@@ -39,8 +36,6 @@ public class Endereco {
         this.cep = cep;
         this.idUsuario = idUsuario;
     }
-
-    // --- GETTERS E SETTERS ---
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -69,7 +64,6 @@ public class Endereco {
     public Integer getIdUsuario() { return idUsuario; }
     public void setIdUsuario(Integer idUsuario) { this.idUsuario = idUsuario; }
 
-    // --- MANTIVE SEU toString() QUE ESTAVA ÓTIMO ---
     @Override
     public String toString() {
         String comp = (complemento == null || complemento.trim().isEmpty()) ? "" : " - " + complemento;

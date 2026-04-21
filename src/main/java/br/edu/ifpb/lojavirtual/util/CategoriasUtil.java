@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CategoriasUtil {
-
-    // Lista central de todas as categorias disponíveis na loja
     private static final List<String> CATEGORIAS = Arrays.asList(
             "Teclado",
             "Mouse",
@@ -25,7 +23,6 @@ public class CategoriasUtil {
             "Mousepad",
             "Cadeira"
     );
-
     public static List<String> getCategorias() {
         return CATEGORIAS;
     }

@@ -2,8 +2,8 @@ package br.edu.ifpb.lojavirtual.model;
 
 import java.util.List;
 public class Pedido {
-    private StatusPedido status; // Alterado de String para StatusPedido
-    private Endereco endereco; // Atributo para guardar o local de entrega
+    private StatusPedido status;
+    private Endereco endereco;
     private int id; private int usuarioId; private String dataPedido; private double valorTotal; private List<PedidoItem> itens;
 
     public int getId() { return id; }

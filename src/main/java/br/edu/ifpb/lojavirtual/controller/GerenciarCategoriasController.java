@@ -43,7 +43,7 @@ public class GerenciarCategoriasController {
         colAcoes.setCellFactory(param -> new TableCell<>() {
             private final Button editBtn = new Button("Editar");
             private final Button delBtn = new Button("Excluir");
-            private final HBox pane = new HBox(8, editBtn, delBtn); // Maior espaçamento entre botões
+            private final HBox pane = new HBox(8, editBtn, delBtn);
 
             {
                 editBtn.setStyle("-fx-background-color: #ffc107; -fx-cursor: hand; -fx-font-weight: bold;");
@@ -83,19 +83,13 @@ public class GerenciarCategoriasController {
 
         try {
             if (categoriaEmEdicao == null) {
-                // Modo Cadastro
                 categoriaDAO.salvar(new Categoria(null, nome));
             } else {
-                // Modo Edição
                 categoriaEmEdicao.setNome(nome);
                 categoriaDAO.atualizar(categoriaEmEdicao);
-
-                // --- AJUSTE AQUI: Limpa o estado de edição ---
                 categoriaEmEdicao = null;
                 btnSalvar.setText("Adicionar");
             }
-
-            // Limpa o campo e recarrega a tabela
             nomeCategoriaField.clear();
             carregarCategorias();
 
@@ -113,11 +107,8 @@ public class GerenciarCategoriasController {
 
     private void handleExcluir(Categoria c) {
         try {
-            // 1. Instancia o ProdutoDAO para verificar a regra de negócio
             ProdutoDAO produtoDAO = new ProdutoDAO();
             int quantidadeProdutos = produtoDAO.contarProdutosPorCategoria(c.getId());
-
-            // 2. APLICAÇÃO DA REGRA DE NEGÓCIO
             if (quantidadeProdutos > 0) {
                 Alert alertErro = new Alert(Alert.AlertType.ERROR);
                 alertErro.setTitle("Bloqueio de Exclusão");
@@ -127,10 +118,8 @@ public class GerenciarCategoriasController {
                         "Para excluí-la, você deve primeiro remover os produtos ou mudar a categoria deles.");
                 if (stage != null) alertErro.initOwner(stage);
                 alertErro.showAndWait();
-                return; // Encerra aqui, impedindo a exclusão
+                return;
             }
-
-            // 3. Caso não haja produtos, segue para a confirmação normal
             Alert alertConfirm = new Alert(Alert.AlertType.CONFIRMATION, "Deseja realmente excluir a categoria '" + c.getNome() + "'?", ButtonType.YES, ButtonType.NO);
             alertConfirm.setTitle("Confirmar Exclusão");
             alertConfirm.setHeaderText(null);
@@ -139,7 +128,6 @@ public class GerenciarCategoriasController {
             if (alertConfirm.showAndWait().get() == ButtonType.YES) {
                 if (categoriaDAO.excluir(c.getId())) {
                     carregarCategorias();
-                    // Opcional: Se o item deletado era o que estava sendo editado, limpa o form
                     if (categoriaEmEdicao != null && categoriaEmEdicao.getId().equals(c.getId())) {
                         handleLimparForm();
                     }
@@ -150,8 +138,6 @@ public class GerenciarCategoriasController {
             showAlert("Erro de Banco", "Ocorreu um erro ao verificar os produtos vinculados.");
         }
     }
-
-    // Método extra para limpar o formulário manualmente se desejar cancelar uma edição
     private void handleLimparForm() {
         categoriaEmEdicao = null;
         nomeCategoriaField.clear();

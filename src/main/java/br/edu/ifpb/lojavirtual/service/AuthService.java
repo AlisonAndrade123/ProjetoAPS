@@ -7,29 +7,18 @@ import br.edu.ifpb.lojavirtual.util.AppException;
 
 import java.util.Optional;
 
-/**
- * Serviço de Autenticação (Singleton).
- * Gerencia a lógica de login/registro e a sessão do usuário logado.
- */
 public class AuthService {
 
-    // Instância única (Singleton) para toda a aplicação.
     private static AuthService instance;
 
-    // Campo para armazenar o usuário que está atualmente logado.
     private Usuario usuarioLogado;
 
     private final UsuarioDAO usuarioDAO;
 
-    // O construtor agora é privado para forçar o uso do getInstance().
     private AuthService() {
-        this.usuarioDAO = new UsuarioDAO(); // O DAO é instanciado aqui dentro.
+        this.usuarioDAO = new UsuarioDAO();
     }
 
-    /**
-     * Ponto de acesso global para a instância do AuthService.
-     * @return A instância única do serviço.
-     */
     public static AuthService getInstance() {
         if (instance == null) {
             instance = new AuthService();
@@ -37,35 +26,21 @@ public class AuthService {
         return instance;
     }
 
-    /**
-     * Tenta autenticar um usuário no sistema.
-     *
-     * @param email O e-mail fornecido pelo usuário.
-     * @param senha A senha fornecida pelo usuário.
-     * @return O objeto Usuario logado, se as credenciais forem válidas.
-     * @throws AppException Se o login falhar (usuário não encontrado, senha incorreta, etc.).
-     */
     public Usuario login(String email, String senha) throws AppException {
         if (email == null || email.trim().isEmpty() || senha == null || senha.isEmpty()) {
             throw new AppException("E-mail e senha são obrigatórios.");
         }
+        Usuario usuario = usuarioDAO.autenticar(email, senha);
 
-        Optional<Usuario> userOptional = usuarioDAO.findByEmail(email);
-
-        if (userOptional.isEmpty()) {
+        if (usuario == null) {
             throw new AppException("E-mail ou senha inválidos.");
         }
 
-        Usuario usuario = userOptional.get();
-
-        if (!usuario.getSenha().equals(senha)) {
-            throw new AppException("E-mail ou senha inválidos.");
-        }
-
-        //  Armazena o usuário na sessão após o sucesso do login.
         this.usuarioLogado = usuario;
 
-        System.out.println("Usuário logado com sucesso: " + usuario.getNome() + " (Admin: " + usuario.isAdmin() + ")");
+        System.out.println("Usuário logado com sucesso: " + usuario.getNome() +
+                ". Endereço carregado: " + (usuario.getEndereco() != null ? "Sim" : "Não"));
+
         return usuario;
     }
 
@@ -85,16 +60,12 @@ public class AuthService {
         return usuarioDAO.save(novoUsuario);
     }
 
-    /**
-     *  Método para obter o usuário atualmente logado de qualquer parte do código.
-     * @return O usuário logado, ou null se ninguém estiver logado.
-     */
     public Usuario getUsuarioLogado() {
         return this.usuarioLogado;
     }
 
     public void logout() {
-        this.usuarioLogado = null; // Limpa a referência do usuário na memória
+        this.usuarioLogado = null;
     }
 }
 

@@ -1,165 +1,139 @@
 package br.edu.ifpb.lojavirtual.controller;
 
-import br.edu.ifpb.lojavirtual.dao.ProdutoDAO; // Importe adicionado
-import br.edu.ifpb.lojavirtual.model.Endereco;
-import br.edu.ifpb.lojavirtual.model.Produto;
+import br.edu.ifpb.lojavirtual.dao.EnderecoDAO;
+import br.edu.ifpb.lojavirtual.dao.ProdutoDAO;
+import br.edu.ifpb.lojavirtual.model.*;
+import br.edu.ifpb.lojavirtual.service.AuthService;
 import br.edu.ifpb.lojavirtual.util.CarrinhoManager;
 import br.edu.ifpb.lojavirtual.util.NavigationManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.StringConverter;
 
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 public class CarrinhoController {
     @FXML private VBox itensCarrinhoVBox;
-    @FXML private Button limparCarrinhoButton;
-    @FXML private Button continuarComprandoButton;
-    @FXML private Label subtotalLabel;
-    @FXML private Label freteLabel;
-    @FXML private Label totalLabel;
-    @FXML private TextField cepField;
-    @FXML private TextField ruaField;
-    @FXML private TextField numeroField;
-    @FXML private TextField complementoField;
-    @FXML private TextField bairroField;
-    @FXML private TextField cidadeField;
-    @FXML private TextField estadoField;
-    @FXML private Button pagamentoButton;
+    @FXML private Button limparCarrinhoButton, continuarComprandoButton, pagamentoButton;
+    @FXML private Label subtotalLabel, freteLabel, totalLabel;
+    @FXML private ComboBox<Endereco> enderecoComboBox;
 
     private final CarrinhoManager carrinhoManager = CarrinhoManager.getInstance();
+    private final EnderecoDAO enderecoDAO = new EnderecoDAO();
 
     @FXML
     public void initialize() {
         limparCarrinhoButton.setOnAction(e -> handleLimparCarrinho());
         continuarComprandoButton.setOnAction(e -> handleContinuarComprando());
+
+        configurarComboBoxEndereco();
         popularItensCarrinho();
     }
 
-    @FXML
-    private void handleIrParaPagamento(ActionEvent event) {
-        // 1. Validação de campos vazios
-        if (ruaField.getText().trim().isEmpty() || numeroField.getText().trim().isEmpty() ||
-                bairroField.getText().trim().isEmpty() || cidadeField.getText().trim().isEmpty() ||
-                estadoField.getText().trim().isEmpty() || cepField.getText().trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Campos Incompletos", "Por favor, preencha todos os campos de endereço antes de prosseguir.");
-            return;
-        }
-
-        // 2. VERIFICAÇÃO DE ESTOQUE ANTES DE NAVEGAR
+    private void configurarComboBoxEndereco() {
+        enderecoComboBox.getItems().clear();
+        Usuario user = AuthService.getInstance().getUsuarioLogado();
+        if (user == null) return;
         try {
-            ProdutoDAO produtoDAO = new ProdutoDAO();
-            for (Map.Entry<Produto, Integer> entry : carrinhoManager.getItens().entrySet()) {
-                Produto pDoCarrinho = entry.getKey();
-                int qtdDesejada = entry.getValue();
-
-                // Busca o produto atualizado direto do banco de dados
-                Produto pDoBanco = produtoDAO.findById(pDoCarrinho.getId());
-
-                if (pDoBanco == null || pDoBanco.getQuantidade() < qtdDesejada) {
-                    int estoqueDisponivel = (pDoBanco != null) ? pDoBanco.getQuantidade() : 0;
-                    showAlert(Alert.AlertType.ERROR, "Estoque Insuficiente",
-                            "Infelizmente o produto '" + pDoCarrinho.getNome() + "' não possui estoque suficiente.\n" +
-                                    "Disponível: " + estoqueDisponivel + " unidade(s).");
-                    return; // Interrompe o processo e não vai para a tela de pagamento
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao verificar estoque no banco de dados.");
-            return;
-        }
-
-        // 3. Se passou pela validação de estoque, salva o endereço e prossegue
-        Endereco enderecoDeEntrega = new Endereco(
-                ruaField.getText(), numeroField.getText(), complementoField.getText(),
-                bairroField.getText(), cidadeField.getText(), estadoField.getText(), cepField.getText()
-        );
-
-        carrinhoManager.setEnderecoEntrega(enderecoDeEntrega);
-
-        double valorTotal = carrinhoManager.calcularTotal();
-        PagamentoController pagamentoController = NavigationManager.getInstance().navigateToPagamento();
-
-        if (pagamentoController != null) {
-            pagamentoController.inicializar(valorTotal);
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar a tela de pagamento.");
-        }
+            List<Endereco> enderecos = enderecoDAO.buscarPorUsuario(user.getId());
+            enderecoComboBox.getItems().addAll(enderecos);
+            enderecoComboBox.setConverter(new StringConverter<>() {
+                public String toString(Endereco e) { return e == null ? "" : e.getRua() + ", " + e.getNumero(); }
+                public Endereco fromString(String s) { return null; }
+            });
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    private void popularItensCarrinho() {
+    @FXML
+    private void handleAbrirCadastro(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/br/edu/ifpb/lojavirtual/view/EnderecoForm.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+            configurarComboBoxEndereco();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public void popularItensCarrinho() {
         itensCarrinhoVBox.getChildren().clear();
         Map<Produto, Integer> itens = carrinhoManager.getItens();
-        if (itens.isEmpty()) {
-            Label carrinhoVazioLabel = new Label("Seu carrinho está vazio.");
-            carrinhoVazioLabel.setFont(new Font("System Bold", 18));
-            itensCarrinhoVBox.getChildren().add(carrinhoVazioLabel);
+        if (itens == null || itens.isEmpty()) {
+            itensCarrinhoVBox.getChildren().add(new Label("Seu carrinho está vazio."));
             pagamentoButton.setDisable(true);
         } else {
             pagamentoButton.setDisable(false);
             for (Map.Entry<Produto, Integer> entry : itens.entrySet()) {
-                HBox itemNode = criarItemCarrinhoNode(entry.getKey(), entry.getValue());
-                itensCarrinhoVBox.getChildren().add(itemNode);
+                itensCarrinhoVBox.getChildren().add(criarItemCarrinhoNode(entry.getKey(), entry.getValue()));
             }
         }
         atualizarResumo();
     }
 
+    @FXML private void handleIrParaPagamento(ActionEvent event) {
+        if (enderecoComboBox.getValue() == null) {
+            showAlert(Alert.AlertType.WARNING, "Atenção", "Selecione um endereço!");
+            return;
+        }
+        carrinhoManager.setEnderecoEntrega(enderecoComboBox.getValue());
+        PagamentoController pc = NavigationManager.getInstance().navigateToPagamento();
+        if (pc != null) pc.inicializar(carrinhoManager.calcularTotal());
+    }
+
     private void atualizarResumo() {
-        double subtotal = carrinhoManager.calcularTotal();
-        double frete = 0.0;
-        double total = subtotal + frete;
-        subtotalLabel.setText(String.format("R$ %.2f", subtotal).replace('.', ','));
-        freteLabel.setText(String.format("R$ %.2f", frete).replace('.', ','));
-        totalLabel.setText(String.format("R$ %.2f", total).replace('.', ','));
+        double sub = carrinhoManager.calcularTotal();
+        subtotalLabel.setText("Subtotal: R$ " + String.format("%.2f", sub));
+        totalLabel.setText("Total: R$ " + String.format("%.2f", sub));
     }
 
-    private void handleLimparCarrinho() {
-        carrinhoManager.limparCarrinho();
-        popularItensCarrinho();
-    }
-
-    private void handleContinuarComprando() {
-        NavigationManager.getInstance().navigateToProductsView();
+    private void handleLimparCarrinho() { carrinhoManager.limparCarrinho(); popularItensCarrinho(); }
+    private void handleContinuarComprando() { NavigationManager.getInstance().navigateToProductsView(); }
+    private void showAlert(Alert.AlertType t, String tit, String msg) {
+        Alert a = new Alert(t); a.setTitle(tit); a.setContentText(msg); a.show();
     }
 
     private HBox criarItemCarrinhoNode(Produto produto, int quantidade) {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER_LEFT);
         hBox.setMinHeight(110.0);
-        hBox.setMaxHeight(150.0);
         hBox.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-border-color: #00A60E; -fx-border-width: 2; -fx-border-radius: 12;");
 
         ImageView imageView = new ImageView(produto.getImage());
-        imageView.setFitHeight(90.0);
-        imageView.setFitWidth(90.0);
-        imageView.setPreserveRatio(true);
+        imageView.setFitHeight(90.0); imageView.setFitWidth(90.0); imageView.setPreserveRatio(true);
         HBox.setMargin(imageView, new Insets(0, 0, 0, 15));
 
         VBox infoVBox = new VBox();
-        HBox.setHgrow(infoVBox, javafx.scene.layout.Priority.ALWAYS);
-        infoVBox.setPadding(new Insets(0, 0, 0, 20));
+        HBox.setHgrow(infoVBox, Priority.ALWAYS);
+        infoVBox.setPadding(new Insets(10, 20, 10, 20));
 
         Label nomeLabel = new Label(produto.getNome());
         nomeLabel.setFont(new Font("System Bold", 18.0));
-        VBox.setMargin(nomeLabel, new Insets(0, 0, 5, 0));
-
-        Label precoLabel = new Label(String.format("R$ %.2f", produto.getPreco()).replace('.', ','));
-        precoLabel.setTextFill(javafx.scene.paint.Color.valueOf("#00a60e"));
-        precoLabel.setFont(new Font("System Bold", 16.0));
 
         Label descricaoLabel = new Label(produto.getDescricao());
         descricaoLabel.setFont(new Font("System", 14.0));
-        descricaoLabel.setMaxWidth(450.0);
         descricaoLabel.setWrapText(true);
+        descricaoLabel.setMaxWidth(350.0);
+
+        Label precoLabel = new Label(String.format("R$ %.2f", produto.getPreco()).replace('.', ','));
+        precoLabel.setTextFill(Color.valueOf("#00a60e"));
+        precoLabel.setFont(new Font("System Bold", 16.0));
 
         infoVBox.getChildren().addAll(nomeLabel, descricaoLabel, precoLabel);
 
@@ -169,57 +143,28 @@ public class CarrinhoController {
 
         HBox qtdHBox = new HBox(5.0);
         qtdHBox.setAlignment(Pos.CENTER);
-        qtdHBox.setMinWidth(180.0);
-
-        Label qtdLabel = new Label("Quantidade:");
-        qtdLabel.setTextFill(javafx.scene.paint.Color.valueOf("#333333"));
-        qtdLabel.setFont(new Font(15.0));
-
-        Button upButton = new Button("+");
-        upButton.setPrefSize(30, 30);
-        upButton.setStyle("-fx-background-color: #00A60E; -fx-background-radius: 5; -fx-cursor: hand; -fx-text-fill: white; -fx-font-weight: bold;");
-        upButton.setOnAction(e -> {
-            carrinhoManager.incrementarQuantidade(produto);
-            popularItensCarrinho();
-        });
-
-        TextField qtdTextField = new TextField(String.valueOf(quantidade));
-        qtdTextField.setAlignment(Pos.CENTER);
-        qtdTextField.setPrefSize(40.0, 30.0);
-        qtdTextField.setEditable(false);
 
         Button downButton = new Button("-");
-        downButton.setPrefSize(30, 30);
-        downButton.setStyle("-fx-background-color: #DC3545; -fx-background-radius: 5; -fx-cursor: hand; -fx-text-fill: white; -fx-font-weight: bold;");
-        downButton.setOnAction(e -> {
-            carrinhoManager.decrementarQuantidade(produto);
-            popularItensCarrinho();
-        });
+        downButton.setStyle("-fx-background-color: #DC3545; -fx-text-fill: white;");
+        downButton.setOnAction(e -> { carrinhoManager.decrementarQuantidade(produto); popularItensCarrinho(); });
 
-        qtdHBox.getChildren().addAll(qtdLabel, downButton, qtdTextField, upButton);
+        TextField qtdTextField = new TextField(String.valueOf(quantidade));
+        qtdTextField.setPrefWidth(40);
+        qtdTextField.setEditable(false);
+
+        Button upButton = new Button("+");
+        upButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white;");
+        upButton.setOnAction(e -> { carrinhoManager.incrementarQuantidade(produto); popularItensCarrinho(); });
+
+        qtdHBox.getChildren().addAll(downButton, qtdTextField, upButton);
 
         Button removerButton = new Button("Remover");
-        removerButton.setStyle("-fx-background-color: #DC3545; -fx-background-radius: 8; -fx-cursor: hand; -fx-text-fill: white; -fx-font-weight: bold;");
-        removerButton.setOnAction(e -> {
-            carrinhoManager.removerProduto(produto);
-            popularItensCarrinho();
-        });
+        removerButton.setStyle("-fx-background-color: #DC3545; -fx-text-fill: white;");
+        removerButton.setOnAction(e -> { carrinhoManager.removerProduto(produto); popularItensCarrinho(); });
 
-        VBox.setMargin(removerButton, new Insets(10, 0, 0, 0));
         controlesVBox.getChildren().addAll(qtdHBox, removerButton);
 
         hBox.getChildren().addAll(imageView, infoVBox, controlesVBox);
         return hBox;
-    }
-
-    private void showAlert(Alert.AlertType alertType, String title, String message) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        if (itensCarrinhoVBox.getScene() != null) {
-            alert.initOwner(itensCarrinhoVBox.getScene().getWindow());
-        }
-        alert.showAndWait();
     }
 }

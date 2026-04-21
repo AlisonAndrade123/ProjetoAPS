@@ -12,6 +12,7 @@ import br.edu.ifpb.lojavirtual.util.CarrinhoManager;
 import br.edu.ifpb.lojavirtual.util.NavigationManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
@@ -33,12 +34,9 @@ public class ProdutosController {
     @FXML private ScrollPane categoryScrollPane;
     @FXML private HBox categoryHBox;
     @FXML private TilePane productTilePane;
-    @FXML private Button cartButton;
-    @FXML private Button historyButton;
-    @FXML private Button profileButton;
+    @FXML private Button cartButton, historyButton, profileButton, btnLimparFiltro;
     @FXML private ComboBox<Catalogo> cbCatalogosCliente;
     @FXML private Label lblTituloSessao;
-    @FXML private Button btnLimparFiltro;
 
     private Catalogo catalogoAtivo = null;
     private Categoria categoriaAtiva = null;
@@ -85,9 +83,28 @@ public class ProdutosController {
         carregarCatalogos();
     }
 
+    @FXML
+    private void handleMeusEnderecos(ActionEvent event) {
+        if (this.usuarioLogado == null) {
+            showAlert(AlertType.WARNING, "Login Necessário", "Faça login para gerenciar endereços.");
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/br/edu/ifpb/lojavirtual/view/MeusEnderecosView.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Gerenciar Meus Endereços");
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void criarBotoesDeCategoria() {
         categoryHBox.getChildren().clear();
-
         Button todosButton = criarBotaoEstilizado("Todos", "Todos");
         categoryHBox.getChildren().add(todosButton);
 
@@ -96,20 +113,15 @@ public class ProdutosController {
             List<Categoria> categorias = categoriaDAO.findAll();
 
             for (Categoria cat : categorias) {
-                Button categoriaButton = criarBotaoEstilizado(cat.getNome(), cat);
-                categoryHBox.getChildren().add(categoriaButton);
+                categoryHBox.getChildren().add(criarBotaoEstilizado(cat.getNome(), cat));
             }
-        } catch (SQLException e) {
-            showAlert(AlertType.ERROR, "Erro", "Não foi possível carregar as categorias.");
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     private Button criarBotaoEstilizado(String nome, Object userData) {
         Button button = new Button(nome);
         button.setUserData(userData);
-        button.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #00A60E; -fx-border-radius: 20; -fx-background-radius: 20; -fx-border-width: 2; -fx-text-fill: #333333; -fx-padding: 8 20; -fx-cursor: hand;");
-        button.setFont(new Font("System", 16.0));
+        button.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #00A60E; -fx-border-radius: 20; -fx-background-radius: 20; -fx-border-width: 2; -fx-padding: 8 20; -fx-cursor: hand;");
         button.setOnAction(this::handleCategoryButtonAction);
         return button;
     }
@@ -127,17 +139,8 @@ public class ProdutosController {
 
         aplicarFiltros();
     }
-
     private void loadAllProducts() {
-        if (produtoDAO != null) {
-            try {
-                List<Produto> produtos = produtoDAO.findAll();
-                displayProducts(produtos);
-            } catch (SQLException e) {
-                showAlert(AlertType.ERROR, "Erro de Banco de Dados", "Erro ao carregar produtos: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
+        try { displayProducts(produtoDAO.findAll()); } catch (SQLException e) { e.printStackTrace(); }
     }
 
     private void displayProducts(List<Produto> produtos) {
@@ -177,8 +180,6 @@ public class ProdutosController {
 
         javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
         VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-
-        // --- BOTÕES ADICIONADOS AQUI ---
         Button detalhesButton = new Button("Avaliações");
         detalhesButton.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #00A60E; -fx-text-fill: #333; -fx-border-radius: 5; -fx-padding: 8px 16px; -fx-cursor: hand;");
         detalhesButton.setOnAction(event -> abrirModalDetalhes(produto));
@@ -186,16 +187,12 @@ public class ProdutosController {
         Button buyButton = new Button("Comprar");
         buyButton.setStyle("-fx-background-color: #00A60E; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 5; -fx-padding: 8px 16px; -fx-cursor: hand;");
         buyButton.setOnAction(event -> handleComprarProduto(produto));
-
-        // Coloca os dois botões lado a lado
         HBox botoesBox = new HBox(10, detalhesButton, buyButton);
         botoesBox.setAlignment(javafx.geometry.Pos.CENTER);
 
         card.getChildren().addAll(imageView, nameLabel, priceLabel, spacer, botoesBox);
         return card;
     }
-
-    // --- NOVO MÉTODO PARA ABRIR A TELA DE AVALIAÇÕES ---
     private void abrirModalDetalhes(Produto produto) {
         Window ownerWindow = productTilePane.getScene().getWindow();
 
@@ -261,36 +258,23 @@ public class ProdutosController {
     private void carregarCatalogos() {
         try {
             List<Catalogo> catalogos = catalogoDAO.listarTodos();
-
-            Catalogo todos = new Catalogo();
-            todos.setNome("Todos os Produtos");
+            Catalogo todos = new Catalogo(); todos.setNome("Todos os Produtos");
             catalogos.add(0, todos);
-
             cbCatalogosCliente.getItems().setAll(catalogos);
-        } catch (SQLException e) {
-            System.err.println("Erro ao carregar os catálogos: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     @FXML
     public void filtrarPorCatalogo(ActionEvent event) {
-        Catalogo selecionado = cbCatalogosCliente.getSelectionModel().getSelectedItem();
-        if (selecionado == null) return;
-
-        this.catalogoAtivo = selecionado;
+        this.catalogoAtivo = cbCatalogosCliente.getSelectionModel().getSelectedItem();
         aplicarFiltros();
     }
 
     @FXML
     public void limparFiltro(ActionEvent event) {
         cbCatalogosCliente.getSelectionModel().clearSelection();
-        this.catalogoAtivo = null;
-        this.categoriaAtiva = null;
-        this.termoBusca = "";
-
-        if (searchTextField != null) {
-            searchTextField.clear();
-        }
+        this.catalogoAtivo = null; this.categoriaAtiva = null; this.termoBusca = "";
+        if (searchTextField != null) searchTextField.clear();
         aplicarFiltros();
     }
 

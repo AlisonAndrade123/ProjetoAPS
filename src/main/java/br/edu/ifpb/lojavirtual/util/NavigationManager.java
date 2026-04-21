@@ -12,9 +12,6 @@ import javafx.stage.Window;
 
 import java.io.IOException;
 
-/**
- * Gerencia a navegação entre telas e a abertura de modais.
- */
 public class NavigationManager {
     private static NavigationManager instance;
     private Stage primaryStage;
@@ -54,13 +51,11 @@ public class NavigationManager {
     }
 
     private Scene getScene(Parent root) {
-        Scene scene;
         if (primaryStage.getScene() == null) {
-            scene = new Scene(root);
+            return new Scene(root);
         } else {
-            scene = new Scene(root, primaryStage.getScene().getWidth(), primaryStage.getScene().getHeight());
+            return new Scene(root, primaryStage.getScene().getWidth(), primaryStage.getScene().getHeight());
         }
-        return scene;
     }
 
     public Object setupModal(String fxmlPath, String title, Window ownerWindow) {
@@ -76,7 +71,6 @@ public class NavigationManager {
             modalStage.initOwner(ownerWindow);
             modalStage.initModality(Modality.APPLICATION_MODAL);
 
-            // Verificações e configurações dos diferentes Modais do sistema
             if (controller instanceof CadastrarProdutoController cadastrarController) {
                 cadastrarController.setStage(modalStage);
                 cadastrarController.setProdutoDAO(new ProdutoDAO());
@@ -90,7 +84,7 @@ public class NavigationManager {
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarCategoriasController categoriaController) {
                 categoriaController.setStage(modalStage);
             }
-            // NOVO: Adicionado suporte para a Gestão de Pedidos
+
             else if (controller instanceof br.edu.ifpb.lojavirtual.controller.GerenciarPedidosController ordersController) {
                 ordersController.setStage(modalStage);
             }
@@ -130,5 +124,13 @@ public class NavigationManager {
 
     public void navigateToHistory() {
         navigateTo("/br/edu/ifpb/lojavirtual/view/HistoricoView.fxml", "Meu Histórico de Compras");
+    }
+
+    public void navigateToGerenciarEnderecos() {
+        navigateTo("/br/edu/ifpb/lojavirtual/view/GerenciarEnderecos.fxml", "Meus Endereços");
+    }
+
+    public void navigateToMeusEnderecos() {
+        navigateTo("/br/edu/ifpb/lojavirtual/view/MeusEnderecosView.fxml", "Meus Endereços");
     }
 }

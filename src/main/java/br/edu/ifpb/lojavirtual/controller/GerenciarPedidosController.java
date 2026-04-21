@@ -19,7 +19,7 @@ public class GerenciarPedidosController {
     @FXML private TableColumn<Pedido, String> colData;
     @FXML private TableColumn<Pedido, String> colTotal;
     @FXML private TableColumn<Pedido, String> colStatus;
-    @FXML private TableColumn<Pedido, Pedido> colAcoes; // Esta coluna precisa do objeto Pedido
+    @FXML private TableColumn<Pedido, Pedido> colAcoes;
 
     private final PedidoDAO pedidoDAO = new PedidoDAO();
     private Stage stage;
@@ -34,36 +34,27 @@ public class GerenciarPedidosController {
     }
 
     private void configurarTabela() {
-        // Colunas normais
         colId.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getId()));
         colData.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDataPedido()));
         colTotal.setCellValueFactory(d -> new SimpleStringProperty(String.format("R$ %.2f", d.getValue().getValorTotal())));
         colStatus.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getStatus().name()));
-
-        // --- LINHA QUE ESTAVA FALTANDO ---
-        // Dizemos para a coluna de ações que o "valor" dela é o pedido inteiro da linha
         colAcoes.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue()));
-
-        // Agora o CellFactory vai funcionar porque ele terá um objeto Pedido para trabalhar
         colAcoes.setCellFactory(param -> new TableCell<Pedido, Pedido>() {
             private final ComboBox<StatusPedido> comboStatus = new ComboBox<>(FXCollections.observableArrayList(StatusPedido.values()));
-
             {
                 comboStatus.setPromptText("Mudar...");
                 comboStatus.setPrefWidth(150);
 
                 comboStatus.setOnAction(e -> {
-                    Pedido p = getItem(); // Pega o pedido da linha atual
+                    Pedido p = getItem();
                     StatusPedido novoStatus = comboStatus.getValue();
 
                     if (p != null && novoStatus != null && !novoStatus.equals(p.getStatus())) {
-                        // Aplica a regra de negócio do Enum
                         if (p.getStatus().podeMudarPara(novoStatus)) {
                             atualizarStatusPedido(p, novoStatus);
                         } else {
                             showAlert(Alert.AlertType.WARNING, "Transição Inválida",
                                     "Não é permitido mudar de " + p.getStatus() + " para " + novoStatus);
-                            // Reseta o combo para o valor antigo
                             comboStatus.setValue(p.getStatus());
                         }
                     }
@@ -76,7 +67,6 @@ public class GerenciarPedidosController {
                 if (empty || item == null) {
                     setGraphic(null);
                 } else {
-                    // Atualiza o valor do ComboBox sem disparar o evento de mudança
                     comboStatus.getSelectionModel().select(item.getStatus());
                     setGraphic(comboStatus);
                 }
@@ -97,8 +87,8 @@ public class GerenciarPedidosController {
     private void atualizarStatusPedido(Pedido p, StatusPedido novoStatus) {
         try {
             pedidoDAO.atualizarStatus(p.getId(), novoStatus);
-            p.setStatus(novoStatus); // Atualiza o objeto na memória
-            tabelaPedidos.refresh(); // Atualiza a linha na tabela
+            p.setStatus(novoStatus);
+            tabelaPedidos.refresh();
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Erro", "Falha ao atualizar banco.");
         }

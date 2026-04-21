@@ -24,9 +24,6 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import java.awt.Desktop;
 
-/**
- * Utilitário para gerar a Nota Fiscal em formato PDF usando OpenPDF.
- */
 public class GeradorNotaFiscalPDF {
 
     private static final Font FONTE_TITULO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.BLACK);
@@ -35,7 +32,6 @@ public class GeradorNotaFiscalPDF {
     private static final Font FONTE_TOTAL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
 
     public static File gerarPdf(NotaFiscal notaFiscal) throws IOException {
-        // Define o diretório na área de trabalho (Desktop)
         Path diretorioPath = Paths.get(System.getProperty("user.home"), "Desktop", "notas_fiscais");
         Files.createDirectories(diretorioPath);
 
@@ -46,8 +42,6 @@ public class GeradorNotaFiscalPDF {
         try {
             PdfWriter.getInstance(documento, new FileOutputStream(arquivoPdf));
             documento.open();
-
-            // Cabeçalho da Nota
             Paragraph titulo = new Paragraph("NOTA FISCAL", FONTE_TITULO);
             titulo.setAlignment(Element.ALIGN_CENTER);
             documento.add(titulo);
@@ -62,8 +56,6 @@ public class GeradorNotaFiscalPDF {
 
             documento.add(new com.lowagie.text.pdf.draw.LineSeparator());
             documento.add(Chunk.NEWLINE);
-
-            // Endereço de Entrega (Usando o modelo Endereco que atualizamos)
             Endereco endereco = notaFiscal.getEnderecoEntrega();
             if (endereco != null) {
                 Paragraph tituloEndereco = new Paragraph("ENDEREÇO DE ENTREGA", FONTE_CABECALHO);
@@ -72,12 +64,8 @@ public class GeradorNotaFiscalPDF {
                 documento.add(new Paragraph(endereco.toString(), FONTE_CORPO));
                 documento.add(Chunk.NEWLINE);
             }
-
-            // Tabela de Itens
             documento.add(criarTabelaProdutos(notaFiscal.getProdutos()));
             documento.add(Chunk.NEWLINE);
-
-            // Valor Total
             Paragraph total = new Paragraph(String.format("VALOR TOTAL: R$ %.2f", notaFiscal.getValorTotal()), FONTE_TOTAL);
             total.setAlignment(Element.ALIGN_RIGHT);
             documento.add(total);
@@ -96,8 +84,6 @@ public class GeradorNotaFiscalPDF {
     private static PdfPTable criarTabelaProdutos(List<Produto> produtos) {
         PdfPTable tabela = new PdfPTable(4);
         tabela.setWidthPercentage(100);
-
-        // Cabeçalhos da tabela
         String[] cabecalhos = {"PRODUTO", "QTD.", "PREÇO UNIT.", "SUBTOTAL"};
         for (String cabecalho : cabecalhos) {
             PdfPCell cell = new PdfPCell(new Phrase(cabecalho, FONTE_CABECALHO));
@@ -106,7 +92,6 @@ public class GeradorNotaFiscalPDF {
             tabela.addCell(cell);
         }
 
-        // Agrupa produtos iguais para somar a quantidade (Baseado no Equals/HashCode por ID)
         Map<Produto, Long> produtosAgrupados = produtos.stream()
                 .collect(Collectors.groupingBy(p -> p, Collectors.counting()));
 
@@ -122,9 +107,6 @@ public class GeradorNotaFiscalPDF {
         return tabela;
     }
 
-    /**
-     * Abre o arquivo PDF gerado no leitor padrão do sistema operacional.
-     */
     public static void abrirPdf(File arquivoPdf) {
         new Thread(() -> {
             try {

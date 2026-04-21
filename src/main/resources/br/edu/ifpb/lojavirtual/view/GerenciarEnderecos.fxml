@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" alignment="CENTER" style="-fx-padding: 20;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.edu.ifpb.lojavirtual.controller.GerenciarEnderecosController">
+    <Label text="Meus Endereços" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+    <ListView fx:id="listaEnderecos" prefHeight="200" prefWidth="300"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Adicionar Novo" onAction="#handleAddEndereco"/>
+        <Button text="Remover Selecionado" onAction="#handleRemover" style="-fx-background-color: #DC3545; -fx-text-fill: white;"/>
+    </HBox>
+    <Button text="Voltar" onAction="#handleVoltar"/>
+</VBox>

@@ -13,7 +13,6 @@
             <children>
                 <HBox alignment="CENTER" spacing="30.0">
                     <children>
-                        <!-- Painel de Opções de Pagamento -->
                         <VBox fx:id="paymentOptionsVBox" spacing="20.0" HBox.hgrow="ALWAYS" maxWidth="500">
                             <children>
                                 <Label text="Como você prefere pagar?" fx:id="tituloLabel" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
@@ -26,8 +25,6 @@
                                 </StackPane>
                             </children>
                         </VBox>
-
-                        <!-- Painel de Resumo do Pedido -->
                         <VBox fx:id="resumoVBox" spacing="15.0" minWidth="350.0" prefWidth="350.0">
                             <children>
                                 <Label fx:id="resumoTituloLabel" text="RESUMO DO PEDIDO" style="-fx-font-weight: bold;"/>
@@ -56,22 +53,16 @@
                                 </HBox>
 
                                 <Region VBox.vgrow="ALWAYS" minHeight="20"/>
-
-                                <!-- Indicador de Carregamento (será controlado via Thread no Controller) -->
                                 <VBox fx:id="processamentoBox" alignment="CENTER" managed="false" visible="false" spacing="10">
                                     <children>
                                         <Label text="Processando compra..."/>
                                         <ProgressIndicator prefHeight="40" prefWidth="40"/>
                                     </children>
                                 </VBox>
-
-                                <!-- BOTÃO VOLTAR -->
                                 <Button fx:id="btnVoltar" onAction="#handleVoltar"
                                         maxWidth="1.7976931348623157E308" mnemonicParsing="false"
                                         text="Voltar ao Carrinho"
                                         style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 10;"/>
-
-                                <!-- BOTÃO PAGAR -->
                                 <Button fx:id="confirmarPagamentoButton" onAction="#handleConfirmarPagamento"
                                         maxWidth="1.7976931348623157E308" mnemonicParsing="false"
                                         text="Confirmar Pagamento"

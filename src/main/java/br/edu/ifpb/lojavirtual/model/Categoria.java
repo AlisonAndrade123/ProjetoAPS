@@ -11,13 +11,11 @@ public class Categoria {
         this.nome = nome;
     }
 
-    // Crie os Getters e Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
 
-    // Importante para aparecer o nome certinho no ComboBox do JavaFX
     @Override
     public String toString() {
         return this.nome;

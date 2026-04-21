@@ -17,7 +17,6 @@
                 <Font size="48.0"/>
             </font>
         </Label>
-        <!-- Este é o painel de login. É um VBox para organizar os campos verticalmente.-->
         <VBox alignment="CENTER" maxWidth="800.0" spacing="20.0"
               style="-fx-background-color: #FFFFFF; -fx-background-radius: 15;">
             <padding>

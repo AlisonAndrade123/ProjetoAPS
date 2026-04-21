@@ -35,7 +35,6 @@ public class GerenciarCatalogoController {
 
     public void setStage(javafx.stage.Stage stage) {
         this.stage = stage;
-        // Exibe a janela como modal (bloqueando a tela de trás)
         this.stage.showAndWait();
     }
 
@@ -79,17 +78,12 @@ public class GerenciarCatalogoController {
         }
 
         try {
-            // Pega todos os produtos e os produtos que já estão neste catálogo
             List<Produto> todosProdutos = produtoDAO.findAll();
             List<Produto> produtosVinculados = produtoDAO.listarPorCatalogo(selecionado.getId());
-
-            // Filtra os disponíveis (aqueles que NÃO estão na lista de vinculados)
             List<Integer> idsVinculados = produtosVinculados.stream().map(Produto::getId).toList();
             List<Produto> produtosDisponiveis = todosProdutos.stream()
                     .filter(p -> !idsVinculados.contains(p.getId()))
                     .collect(Collectors.toList());
-
-            // Atualiza a tela
             listVinculados.setItems(FXCollections.observableArrayList(produtosVinculados));
             listDisponiveis.setItems(FXCollections.observableArrayList(produtosDisponiveis));
 
@@ -107,7 +101,7 @@ public class GerenciarCatalogoController {
 
         try {
             catalogoDAO.vincularProduto(catalogo.getId(), produto.getId());
-            atualizarListasDeProdutos(); // Recarrega as listas instantaneamente
+            atualizarListasDeProdutos();
         } catch (SQLException e) {
             mostrarAlerta("Erro", "Erro ao adicionar: " + e.getMessage(), Alert.AlertType.ERROR);
         }
@@ -122,7 +116,7 @@ public class GerenciarCatalogoController {
 
         try {
             catalogoDAO.desvincularProduto(catalogo.getId(), produto.getId());
-            atualizarListasDeProdutos(); // Recarrega as listas instantaneamente
+            atualizarListasDeProdutos();
         } catch (SQLException e) {
             mostrarAlerta("Erro", "Erro ao remover: " + e.getMessage(), Alert.AlertType.ERROR);
         }

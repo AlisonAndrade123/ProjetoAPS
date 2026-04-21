@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" style="-fx-padding: 20;" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="br.edu.ifpb.lojavirtual.controller.EnderecoFormController">
+    <TextField fx:id="ruaField" promptText="Rua" />
+    <TextField fx:id="numeroField" promptText="Número" />
+    <TextField fx:id="bairroField" promptText="Bairro" />
+    <TextField fx:id="cidadeField" promptText="Cidade" />
+    <TextField fx:id="estadoField" promptText="Estado" />
+    <TextField fx:id="cepField" promptText="CEP" />
+    <Button text="Salvar Endereço" onAction="#handleSalvar" maxWidth="Infinity" style="-fx-background-color: #00A60E; -fx-text-fill: white;"/>
+</VBox>

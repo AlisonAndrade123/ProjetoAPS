@@ -33,6 +33,42 @@ public class EnderecoDAO {
         }
     }
 
+    public void atualizar(Endereco endereco) throws SQLException {
+        String sql = "UPDATE enderecos SET rua=?, numero=?, complemento=?, bairro=?, cidade=?, estado=?, cep=? WHERE id=?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, endereco.getRua());
+            pstmt.setString(2, endereco.getNumero());
+            pstmt.setString(3, endereco.getComplemento());
+            pstmt.setString(4, endereco.getBairro());
+            pstmt.setString(5, endereco.getCidade());
+            pstmt.setString(6, endereco.getEstado());
+            pstmt.setString(7, endereco.getCep());
+            pstmt.setInt(8, endereco.getId());
+
+            pstmt.executeUpdate();
+        }
+    }
+
+    public void saveOrUpdate(Endereco endereco) throws SQLException {
+        if (endereco.getId() == null || endereco.getId() == 0) {
+            salvar(endereco);
+        } else {
+            atualizar(endereco);
+        }
+    }
+
+    public void remover(int id) throws SQLException {
+        String sql = "DELETE FROM enderecos WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        }
+    }
+
     public List<Endereco> buscarPorUsuario(int idUsuario) throws SQLException {
         List<Endereco> enderecos = new ArrayList<>();
         String sql = "SELECT * FROM enderecos WHERE id_usuario = ?";
@@ -44,11 +80,16 @@ public class EnderecoDAO {
 
             while (rs.next()) {
                 Endereco end = new Endereco(
-                        rs.getString("rua"), rs.getString("numero"), rs.getString("complemento"),
-                        rs.getString("bairro"), rs.getString("cidade"), rs.getString("estado"), rs.getString("cep")
+                        rs.getInt("id"),
+                        rs.getString("rua"),
+                        rs.getString("numero"),
+                        rs.getString("complemento"),
+                        rs.getString("bairro"),
+                        rs.getString("cidade"),
+                        rs.getString("estado"),
+                        rs.getString("cep"),
+                        rs.getInt("id_usuario")
                 );
-                end.setId(rs.getInt("id"));
-                end.setIdUsuario(idUsuario);
                 enderecos.add(end);
             }
         }
