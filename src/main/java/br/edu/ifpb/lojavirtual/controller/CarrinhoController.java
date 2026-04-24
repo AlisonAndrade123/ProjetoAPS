@@ -65,6 +65,7 @@ public class CarrinhoController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/br/edu/ifpb/lojavirtual/view/EnderecoForm.fxml"));
             Parent root = loader.load();
             Stage stage = new Stage();
+            stage.setResizable(false);
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.showAndWait();

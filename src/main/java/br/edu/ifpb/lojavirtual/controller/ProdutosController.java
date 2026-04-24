@@ -95,6 +95,7 @@ public class ProdutosController {
             javafx.scene.Parent root = loader.load();
             javafx.stage.Stage stage = new javafx.stage.Stage();
             stage.setTitle("Gerenciar Meus Endereços");
+            stage.setResizable(false);
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             stage.setScene(new javafx.scene.Scene(root));
             stage.showAndWait();
