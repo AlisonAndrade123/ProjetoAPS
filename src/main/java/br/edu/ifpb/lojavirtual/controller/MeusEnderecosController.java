@@ -50,6 +50,7 @@ public class MeusEnderecosController {
             Parent root = loader.load();
             Stage stage = new Stage();
             stage.setTitle("Novo Endereço");
+            stage.setResizable(false);
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.showAndWait();
